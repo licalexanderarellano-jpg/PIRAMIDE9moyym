@@ -151,6 +151,15 @@ nav.tabs svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stro
 nav.tabs button[aria-current="page"] { color: var(--cone); }
 
 .pill.partido, .tag.partido { color: var(--warn); }
+.how { grid-column: 2 / -1; margin-top: -6px; font-size: 13px; min-width: 0; }
+.how summary { cursor: pointer; color: var(--cone); font-weight: 600; list-style: none; display: inline-flex; align-items: center; gap: 4px; }
+.how summary::-webkit-details-marker { display: none; }
+.how summary::before { content: "▸"; transition: transform .15s; }
+.how[open] summary::before { transform: rotate(90deg); }
+.how .body { margin-top: 6px; padding: 10px 12px; background: var(--surface-2); border-radius: 8px; display: grid; gap: 8px; }
+.how ol { margin: 0; padding-left: 18px; display: grid; gap: 3px; }
+.how a { color: var(--ink); font-weight: 600; display: inline-flex; align-items: center; gap: 6px; text-decoration: none; border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 4px 12px; justify-self: start; }
+.how a svg { width: 16px; height: 16px; fill: var(--bad); }
 .fat { display: grid; gap: 6px; }
 .fat .seg button { min-width: 0; }
 .fat .seg button[data-fat="4"][aria-pressed="true"], .fat .seg button[data-fat="5"][aria-pressed="true"] { background: var(--bad); border-color: var(--bad); color: var(--bg); }
@@ -438,6 +447,46 @@ nav.tabs button[aria-current="page"] { color: var(--cone); }
     return PLAN[dow];
   }
 
+  // Técnica: puntos clave y búsqueda de video
+  var HOW = {
+    sentadilla: ['Barra sobre los trapecios, no sobre el cuello. Pies al ancho de hombros, puntas un poco abiertas.', 'Baja como si te sentaras; las rodillas siguen la dirección de las puntas.', 'Pecho arriba y espalda recta hasta que el muslo quede paralelo al piso.', 'Sube empujando con todo el pie, sin despegar talones.'],
+    rumano: ['Rodillas un poco dobladas y fijas todo el movimiento.', 'Lleva la cadera hacia atrás con la barra pegada a las piernas.', 'Baja hasta media espinilla o hasta donde la espalda siga recta.', 'Sube apretando glúteos.'],
+    remo: ['Inclínate unos 45° con la espalda recta y rodillas un poco dobladas.', 'Jala la barra hacia el ombligo.', 'Codos pegados al cuerpo; junta los omóplatos arriba.', 'Baja controlado, sin dar tirones.'],
+    militar: ['Agarre un poco más ancho que los hombros; barra a la altura de la clavícula.', 'Aprieta abdomen y glúteos para no arquear la espalda.', 'Empuja la barra en línea recta y mete la cabeza cuando pase la frente.', 'Termina con los brazos estirados sobre la cabeza.'],
+    zancada: ['Barra en la espalda; da un paso largo hacia atrás.', 'Baja hasta que la rodilla de atrás casi toque el piso.', 'Torso recto, rodilla de adelante sobre el tobillo.', 'Regresa empujando con el talón de la pierna de adelante.'],
+    pesomuerto: ['Barra sobre la mitad del pie, pegada a las espinillas.', 'Agarra la barra justo afuera de las piernas, espalda recta, pecho arriba.', 'Empuja el piso con las piernas; la barra sube rozando las piernas.', 'Termina de pie apretando glúteos, sin echarte hacia atrás.'],
+    hipthrust: ['Espalda alta apoyada en una cama, banca o sillón firme.', 'Barra sobre la cadera con una toalla doblada debajo.', 'Sube hasta que el torso quede en línea recta con los muslos.', 'Mentón hacia el pecho; aprieta glúteos 1 segundo arriba.'],
+    pressuelo: ['Acostado en el piso, rodillas dobladas.', 'Baja la barra al pecho hasta que los codos toquen el piso.', 'Codos a unos 45° del cuerpo, no abiertos en cruz.', 'Empuja fuerte hacia arriba.'],
+    pantorrilla: ['Barra en la espalda; puntas de los pies sobre un escalón o tabla.', 'Sube lo más alto que puedas sobre las puntas.', 'Baja lento, en 2 segundos, hasta estirar.'],
+    'x-k3': ['Acostado boca arriba, pies cerca de los glúteos, barra sobre la cadera.', 'Sube la cadera hasta formar una línea recta de rodillas a hombros.', 'Aprieta glúteos arriba 1 segundo y baja lento.'],
+    'v-salto': ['Baja a un cuarto de sentadilla con los brazos atrás.', 'Salta lo más alto posible lanzando los brazos.', 'Cae suave con rodillas dobladas y descansa antes del siguiente.'],
+    'x-k1': ['Boca arriba, brazos al techo, rodillas a 90°.', 'Pega la espalda baja al piso todo el tiempo.', 'Estira un brazo y la pierna contraria sin tocar el piso, regresa y cambia.'],
+    'x-k2': ['Apoya el antebrazo debajo del hombro.', 'Cuerpo en línea recta de pies a cabeza.', 'No dejes caer la cadera.'],
+    'x-k4': ['De lado, apoya el antebrazo y la rodilla de arriba sobre una silla o cama.', 'Sube la cadera hasta formar una línea recta.', 'Empieza con rodilla apoyada; con el tiempo puedes apoyar el pie.'],
+    'l-plancha': ['Antebrazos bajo los hombros.', 'Cuerpo recto; aprieta abdomen y glúteos.', 'Respira normal, no sostengas el aire.'],
+    'm-s1': ['Inclínate hacia adelante en los primeros pasos.', 'Pasos cortos y rápidos que se alargan.', 'Brazos fuertes de la cadera a la cara.'],
+    'm-s2': ['Arranca desde acostado, sentado o de rodillas.', 'Levántate y acelera lo más rápido posible a la señal.', 'Pide a alguien que aplauda o grite la salida.'],
+    'j-a1': ['Pon 3 conos en línea separados 5 m.', 'Sal del centro, corre 5 m a un lado y toca la línea.', 'Corre 10 m al otro lado, toca y regresa 5 m al centro.', 'Baja la cadera en cada cambio.'],
+    'j-a2': ['Conos en zigzag separados 3 m.', 'Pasos cortos al llegar a cada cono.', 'Empuja con el pie de afuera para cambiar de dirección.'],
+    'j-a3': ['Sprint 10 m.', 'Frena en 2 o 3 pasos bajando la cadera.', 'Gira y acelera de regreso.']
+  };
+  var Q = {
+    hipthrust: 'hip thrust con barra técnica', pressuelo: 'floor press press de piso con barra', 'x-k4': 'plancha copenhague principiante',
+    'x-k1': 'dead bug ejercicio', 'j-a1': 'pro agility test 5-10-5', 'm-s2': 'salidas de sprint con reacción fútbol', 'm-s1': 'técnica de aceleración sprint fútbol',
+    'v-h1': 'hiit bicicleta spinning sprints 20 segundos', 'x-b1': 'spinning zona 2', 'm-c2': 'calentamiento dinámico fútbol skipping carioca',
+    'j-a2': 'zigzag conos agilidad fútbol', 'j-a3': 'ejercicio frenado y cambio de dirección fútbol', 'x-k3': 'puente de glúteo con barra',
+    'l-c2': 'movilidad cadera tobillo 90 90', 'x-m1': 'rutina de movilidad para futbolistas', 'v-salto': 'jump squat técnica'
+  };
+  var YT = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M23 7.2a3 3 0 0 0-2.1-2.1C19 4.6 12 4.6 12 4.6s-7 0-8.9.5A3 3 0 0 0 1 7.2 31 31 0 0 0 .5 12a31 31 0 0 0 .5 4.8 3 3 0 0 0 2.1 2.1c1.9.5 8.9.5 8.9.5s7 0 8.9-.5a3 3 0 0 0 2.1-2.1 31 31 0 0 0 .5-4.8 31 31 0 0 0-.5-4.8zM9.7 15.1V8.9l5.8 3.1z"/></svg>';
+  var SKIP_HOW = /^(l-c1|l-c3|l-bici|l-est|m-c1|m-c3|m-s3|m-b2|m-e|j-c1|j-r1|j-b1|j-e|v-c1|v-h2|s-|d-|p-|a-4|a-5)/;
+  function howHtml(i) {
+    if (SKIP_HOW.test(i.id) && !HOW[i.id]) return '';
+    var q = Q[i.id] || (i.t + ' técnica');
+    var tips = HOW[i.id] ? '<ol>' + HOW[i.id].map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('') + '</ol>' : '';
+    return '<details class="how"><summary>Cómo se hace</summary><div class="body">' + tips +
+      '<a href="https://www.youtube.com/results?search_query=' + encodeURIComponent(q) + '" target="_blank" rel="noopener">' + YT + 'Ver videos en YouTube</a></div></details>';
+  }
+
   var FATIGA = ['', 'Fresco', 'Bien', 'Normal', 'Cansado', 'Agotado'];
   var CHIPS = [
     ['Huevo', 1], ['Frijoles', 0], ['Tortillas', 0], ['Queso fresco', 1], ['Carne de res', 1], ['Pollo', 1], ['Puerco', 1],
@@ -592,7 +641,7 @@ nav.tabs button[aria-current="page"] { color: var(--cone); }
         html += '<div class="item' + (on ? ' done' : '') + '"><input type="checkbox" id="' + cid + '" data-item="' + i.id + '"' + (on ? ' checked' : '') + '>' +
           '<label for="' + cid + '"><span class="t">' + esc(i.t) + '</span><span class="d">' + esc(i.d) + '</span></label>' +
           (i.kg ? '<span class="kg"><input type="number" inputmode="decimal" step="2.5" id="kg-' + i.id + '" data-kg="' + i.id + '" value="' + (state.kg[i.id] || '') + '" aria-label="Kilos en ' + esc(i.t) + '">kg</span>' : '<span></span>') +
-          '</div>';
+          howHtml(i) + '</div>';
       });
       html += '</div>';
     });
