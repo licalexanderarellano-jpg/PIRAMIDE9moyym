@@ -150,6 +150,26 @@ nav.tabs button { background: none; border: 0; padding: 10px 4px 12px; cursor: p
 nav.tabs svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 nav.tabs button[aria-current="page"] { color: var(--cone); }
 
+.pill.partido, .tag.partido { color: var(--warn); }
+.fat { display: grid; gap: 6px; }
+.fat .seg button { min-width: 0; }
+.fat .seg button[data-fat="4"][aria-pressed="true"], .fat .seg button[data-fat="5"][aria-pressed="true"] { background: var(--bad); border-color: var(--bad); color: var(--bg); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { border: 1px dashed var(--line); background: var(--surface-2); border-radius: 999px; padding: 4px 10px; font-size: 13px; cursor: pointer; }
+.chip.p { border-style: solid; border-color: var(--good); }
+.addfood { display: grid; grid-template-columns: 130px 1fr; gap: 8px; }
+.addfood .full { grid-column: 1 / -1; }
+.addfood select, .addfood input[type="text"] { width: 100%; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); min-width: 0; }
+.check { display: flex; gap: 8px; align-items: center; font-size: 13px; }
+.check input { width: 18px; height: 18px; accent-color: var(--good); }
+.food { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.food .w { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 600; }
+.food .x { min-width: 0; overflow-wrap: anywhere; }
+.food .pr { color: var(--good); font-size: 12px; font-weight: 700; }
+.plate { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+.plate div { background: var(--surface-2); border-radius: 10px; padding: 10px; display: grid; gap: 2px; font-size: 13px; }
+.plate b { font-family: var(--font-display); font-size: 18px; text-transform: uppercase; }
+@media (max-width: 420px) { .addfood { grid-template-columns: 1fr; } }
 .toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(80px + env(safe-area-inset-bottom, 0px)); background: var(--ink); color: var(--bg); padding: 8px 16px; border-radius: 999px; font-size: 13px; z-index: 30; }
 
 @media (max-width: 480px) {
@@ -202,14 +222,33 @@ nav.tabs button[aria-current="page"] { color: var(--cone); }
       <div class="water" id="water"></div>
     </div>
     <div class="card">
-      <h3>Comidas de hoy</h3>
+      <h3>Lo que comí hoy</h3>
       <div class="progress"><div class="track"><i id="mealBar"></i></div><b id="mealTxt"></b></div>
-      <div class="items" id="meals"></div>
+      <p class="small muted">Anota lo que hubo. Toca los botones para escribir más rápido; los de borde verde cuentan como proteína.</p>
+      <div class="addfood">
+        <select id="fd-tiempo" aria-label="Momento del día">
+          <option>Desayuno</option><option>Almuerzo</option><option>Comida</option><option>Cena</option><option>Colación</option>
+        </select>
+        <input type="text" id="fd-txt" placeholder="Ej. 2 huevos, frijoles, 3 tortillas" aria-label="Qué comiste">
+        <div class="chips full" id="chips"></div>
+        <label class="check full" for="fd-prot"><input type="checkbox" id="fd-prot">Tenía proteína (huevo, carne, pollo, queso, leche, pescado)</label>
+        <div class="row full"><button class="btn" id="fd-add" type="button">Agregar</button><span class="small muted" id="fd-msg"></span></div>
+      </div>
+      <div id="foodList"></div>
+    </div>
+    <div class="card">
+      <h3>Arma tu plato con lo que haya</h3>
+      <p class="small muted">No necesitas pesar nada. Usa tu mano como medida en cada comida.</p>
+      <div class="plate" id="plate"></div>
+    </div>
+    <div class="card">
+      <h3>Ideas si hay con qué</h3>
+      <ul class="list small" id="ideas"></ul>
     </div>
     <div class="card">
       <h3>Reglas que más ayudan</h3>
       <ul class="list small">
-        <li>Proteína en cada comida: huevo, pollo, pescado, atún, carne magra, yogur griego, queso panela o frijoles con lenteja.</li>
+        <li>Proteína en cada comida: huevo, pollo, carne, queso fresco, leche, atún o pescado. Si solo hay frijoles y tortillas, agrega un huevo o un pedazo de queso.</li>
         <li>La mitad del plato con verduras. Calabaza, nopales, ejotes, brócoli, jitomate y lechuga casi no suman calorías.</li>
         <li>Las tortillas de maíz y el arroz son tu combustible: más los días de cancha, menos los de descanso.</li>
         <li>Refrescos, jugos, pan dulce y alcohol son lo primero que se recorta. Una cerveza tiene unas 150 kcal.</li>
@@ -360,9 +399,8 @@ nav.tabs button[aria-current="page"] { color: var(--cone); }
       { n: 'HIIT en bici', items: [
         { id: 'v-h1', t: 'Sprints en bici', d: '8 × (20 s máximo / 100 s suave) · sube la resistencia en cada sprint' },
         { id: 'v-h2', t: 'Vuelta a la calma', d: '5 min suave' } ] } ] },
-    6: { tipo: 'descanso', titulo: 'Partido o descanso activo', foco: 'Recuperar', dur: '30–45 min', bloques: [
+    6: { tipo: 'descanso', titulo: 'Descanso activo', foco: 'Recuperar', dur: '30–45 min', bloques: [
       { n: 'Opciones', items: [
-        { id: 's-1', t: 'Partido (si tienes)', d: 'Cuenta como entrenamiento fuerte' },
         { id: 's-2', t: 'Caminata o bici muy suave', d: '30–45 min sin cansarte' },
         { id: 's-3', t: 'Movilidad', d: '10 min' } ] } ] },
     0: { tipo: 'descanso', titulo: 'Descanso total', foco: 'Dormir y preparar la semana', dur: '—', bloques: [
@@ -371,6 +409,40 @@ nav.tabs button[aria-current="page"] { color: var(--cone); }
         { id: 'd-2', t: 'Preparar comida de la semana', d: 'Cocer pollo, arroz, frijoles y picar verdura' },
         { id: 'd-3', t: 'Pesarte en ayunas', d: 'Anota el peso en Perfil para ajustar calorías' } ] } ] }
   };
+
+  var PARTIDO = { tipo: 'partido', titulo: 'Día de partido', foco: 'Rendir y recuperar', dur: 'Partido + 30 min', bloques: [
+    { n: 'Antes', items: [
+      { id: 'p-1', t: 'Comer 3 horas antes', d: 'Tortillas o arroz con huevo o pollo, poca grasa y poco chile' },
+      { id: 'p-2', t: 'Agua', d: '500 ml en las 2 horas previas' },
+      { id: 'p-3', t: 'Calentamiento', d: '15 min: trote, movilidad dinámica, 3 progresivos, toques de balón' } ] },
+    { n: 'Partido', items: [
+      { id: 'p-4', t: 'Jugar el partido', d: 'Toma agua en el medio tiempo' } ] },
+    { n: 'Después', items: [
+      { id: 'p-5', t: 'Enfriamiento', d: '10 min caminando + estiramientos' },
+      { id: 'p-6', t: 'Comer en la primera hora', d: 'Proteína + tortillas o arroz + agua con una pizca de sal o suero' } ] } ] };
+  var PREPARTIDO = { tipo: 'descanso', titulo: 'Activación antes del partido', foco: 'Llegar fresco mañana', dur: '25 min', bloques: [
+    { n: 'Activación', items: [
+      { id: 'a-1', t: 'Bici o trote suave', d: '15 min' },
+      { id: 'a-2', t: 'Progresivos', d: '4 × 20 m al 70–80%, sin cansarte' },
+      { id: 'a-3', t: 'Movilidad', d: '10 min: cadera, tobillo, isquios' } ] },
+    { n: 'Preparación', items: [
+      { id: 'a-4', t: 'Cenar con carbohidrato', d: 'Tortillas, arroz o papa con tu proteína' },
+      { id: 'a-5', t: 'Dormir 8 horas', d: 'Prepara tu ropa y tus tacos desde hoy' } ] } ] };
+
+  function weekKey(d) { return iso(monday(d)); }
+  function matchDay(d) { var v = (state.partidos || {})[weekKey(d)]; return v === 6 || v === 0 ? v : null; }
+  function planFor(date) {
+    var d = typeof date === 'string' ? parse(date) : date, dow = d.getDay(), m = matchDay(d);
+    if (dow === 6) return m === 6 ? PARTIDO : m === 0 ? PREPARTIDO : PLAN[6];
+    if (dow === 0) return m === 0 ? PARTIDO : PLAN[0];
+    return PLAN[dow];
+  }
+
+  var FATIGA = ['', 'Fresco', 'Bien', 'Normal', 'Cansado', 'Agotado'];
+  var CHIPS = [
+    ['Huevo', 1], ['Frijoles', 0], ['Tortillas', 0], ['Queso fresco', 1], ['Carne de res', 1], ['Pollo', 1], ['Puerco', 1],
+    ['Leche', 1], ['Nopales', 0], ['Calabaza', 0], ['Salsa', 0], ['Arroz', 0], ['Papa', 0], ['Fruta', 0], ['Café', 0], ['Pan', 0], ['Refresco', 0]
+  ];
 
   var MEALS = {
     cancha: [
@@ -395,7 +467,7 @@ nav.tabs button[aria-current="page"] { color: var(--cone); }
   var DAYS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
   var DAYS_LONG = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
   var MONTHS = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
-  var TIPO_LABEL = { cancha: 'Cancha', casa: 'Casa', descanso: 'Descanso' };
+  var TIPO_LABEL = { cancha: 'Cancha', casa: 'Casa', descanso: 'Descanso', partido: 'Partido' };
 
   // ---------- Fechas ----------
   function pad(n) { return (n < 10 ? '0' : '') + n; }
@@ -410,12 +482,13 @@ nav.tabs button[aria-current="page"] { color: var(--cone); }
   var KEY = 'cancha-y-casa-v1';
   var state = {
     profile: { edad: 33, peso: 78, estatura: 175, sexo: 'h', meta: 72, deficit: 450, inicio: iso(monday(TODAY)) },
-    log: {}, kg: {},
+    log: {}, kg: {}, partidos: {},
     inbody: [{ fecha: TODAY_ISO, peso: 78 }]
   };
   try { var raw = localStorage.getItem(KEY); if (raw) { var s = JSON.parse(raw); if (s && s.profile) state = Object.assign(state, s); } } catch (e) {}
+  state.partidos = state.partidos || {};
   function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
-  function dayLog(date) { if (!state.log[date]) state.log[date] = { done: {}, meals: {}, water: 0 }; var l = state.log[date]; l.done = l.done || {}; l.meals = l.meals || {}; l.water = l.water || 0; return l; }
+  function dayLog(date) { if (!state.log[date]) state.log[date] = { done: {}, water: 0 }; var l = state.log[date]; l.done = l.done || {}; l.comidas = l.comidas || []; l.water = l.water || 0; return l; }
 
   var sel = TODAY_ISO;
   var metric = 'peso';
@@ -433,7 +506,7 @@ nav.tabs button[aria-current="page"] { color: var(--cone); }
   }
   function macrosFor(tipo) {
     var c = calc(), p = state.profile;
-    var kcal = c.base + (tipo === 'cancha' ? 150 : tipo === 'descanso' ? -200 : 0);
+    var kcal = c.base + (tipo === 'cancha' ? 150 : tipo === 'partido' ? 250 : tipo === 'descanso' ? -200 : 0);
     var prot = Math.round(p.peso * 2);
     var fat = Math.round(p.peso * 0.8);
     var carb = Math.max(80, Math.round((kcal - prot * 4 - fat * 9) / 4));
@@ -448,9 +521,9 @@ nav.tabs button[aria-current="page"] { color: var(--cone); }
       : '<b>Descarga.</b> Haz una serie menos en cada ejercicio y sprints al 85%. Esta semana tu cuerpo asimila lo que entrenaste.';
     return { w: w, phase: phase, txt: txt };
   }
-  function itemsOf(dayIdx) { var out = []; PLAN[dayIdx].bloques.forEach(function (b) { b.items.forEach(function (i) { out.push(i); }); }); return out; }
+  function itemsOf(date) { var out = []; planFor(date).bloques.forEach(function (b) { b.items.forEach(function (i) { out.push(i); }); }); return out; }
   function pctDone(date) {
-    var d = parse(date), items = itemsOf(d.getDay()), l = state.log[date];
+    var items = itemsOf(date), l = state.log[date];
     if (!l || !l.done) return 0;
     var n = items.filter(function (i) { return l.done[i.id]; }).length;
     return n / items.length;
@@ -460,22 +533,27 @@ nav.tabs button[aria-current="page"] { color: var(--cone); }
   function renderHero() {
     var d = TODAY, p = state.profile, b = blockInfo();
     $('heroDate').textContent = DAYS_LONG[d.getDay()] + ' ' + d.getDate() + ' de ' + MONTHS[d.getMonth()] + ' · semana ' + b.w;
-    var mon = monday(TODAY), sessions = 0;
-    for (var i = 0; i < 5; i++) { if (pctDone(iso(addDays(mon, i))) >= 0.8) sessions++; }
+    var mon = monday(TODAY), sessions = 0, fsum = 0, fn = 0;
+    for (var i = 0; i < 7; i++) {
+      var k = iso(addDays(mon, i));
+      if (i < 5 && pctDone(k) >= 0.8) sessions++;
+      var fl = state.log[k] && state.log[k].cansancio; if (fl) { fsum += fl; fn++; }
+    }
     var last = state.inbody.slice().sort(function (a, b) { return a.fecha < b.fecha ? 1 : -1; })[0];
     var peso = last ? last.peso : p.peso;
     var falta = Math.max(0, peso - p.meta);
     $('heroStats').innerHTML =
       '<span class="stat"><b>' + sessions + '/5</b> sesiones esta semana</span>' +
       '<span class="stat"><b>' + peso + ' kg</b> → meta ' + p.meta + ' kg</span>' +
-      '<span class="stat"><b>' + falta.toFixed(1) + ' kg</b> por bajar</span>';
+      '<span class="stat"><b>' + falta.toFixed(1) + ' kg</b> por bajar</span>' +
+      (fn ? '<span class="stat">Cansancio de la semana <b>' + (fsum / fn).toFixed(1) + '/5</b></span>' : '');
   }
 
   // ---------- Entreno ----------
   function renderWeek() {
     var mon = monday(parse(sel)), html = '';
     for (var i = 0; i < 7; i++) {
-      var d = addDays(mon, i), k = iso(d), tipo = PLAN[d.getDay()].tipo, pct = Math.round(pctDone(k) * 100);
+      var d = addDays(mon, i), k = iso(d), tipo = planFor(d).tipo, pct = Math.round(pctDone(k) * 100);
       html += '<button type="button" class="day' + (k === TODAY_ISO ? ' today' : '') + '" data-date="' + k + '" aria-pressed="' + (k === sel) + '" aria-label="' + DAYS_LONG[d.getDay()] + ' ' + d.getDate() + ', ' + TIPO_LABEL[tipo] + '">' +
         '<span class="dn">' + DAYS[d.getDay()] + '</span><span class="dd">' + d.getDate() + '</span>' +
         '<span class="tag ' + tipo + '">' + TIPO_LABEL[tipo] + '</span><span class="bar"><i style="width:' + pct + '%"></i></span></button>';
@@ -483,11 +561,30 @@ nav.tabs button[aria-current="page"] { color: var(--cone); }
     $('week').innerHTML = html;
   }
   function renderSession() {
-    var d = parse(sel), plan = PLAN[d.getDay()], l = dayLog(sel), items = itemsOf(d.getDay());
+    var d = parse(sel), dow = d.getDay(), plan = planFor(d), l = dayLog(sel), items = itemsOf(sel);
     var done = items.filter(function (i) { return l.done[i.id]; }).length;
     var html = '<div class="session-head"><h2>' + esc(plan.titulo) + '</h2><span class="pill ' + plan.tipo + '">' + TIPO_LABEL[plan.tipo] + '</span></div>' +
-      '<div class="meta"><span>' + (sel === TODAY_ISO ? 'Hoy' : DAYS_LONG[d.getDay()] + ' ' + d.getDate()) + '</span><span>Foco: ' + esc(plan.foco) + '</span><span>Duración: ' + plan.dur + '</span></div>' +
-      '<div class="progress"><div class="track"><i style="width:' + Math.round(done / items.length * 100) + '%"></i></div><b>' + done + '/' + items.length + '</b></div>';
+      '<div class="meta"><span>' + (sel === TODAY_ISO ? 'Hoy' : DAYS_LONG[dow] + ' ' + d.getDate()) + '</span><span>Foco: ' + esc(plan.foco) + '</span><span>Duración: ' + plan.dur + '</span></div>';
+    // Partido de la semana
+    if (dow === 6 || dow === 0 || dow === 5) {
+      var m = matchDay(d), opt = function (v, t) { return '<button type="button" data-partido="' + v + '" aria-pressed="' + (m === v) + '">' + t + '</button>'; };
+      html += '<div class="row small"><span class="muted">Partido esta semana:</span><div class="seg">' + opt(6, 'Sábado') + opt(0, 'Domingo') + opt(null, 'No hay') + '</div></div>';
+    }
+    // Cansancio
+    var f = l.cansancio || 0, fb = '';
+    for (var n = 1; n <= 5; n++) fb += '<button type="button" data-fat="' + n + '" aria-pressed="' + (f === n) + '">' + n + ' · ' + FATIGA[n] + '</button>';
+    html += '<div class="fat"><span class="small muted">¿Qué tan cansado llegas hoy?</span><div class="seg">' + fb + '</div></div>';
+    if (f >= 4 && plan.tipo !== 'descanso') {
+      html += '<div class="note"><b>' + (f === 5 ? 'Hoy mejor descansa.' : 'Haz la versión ligera.') + '</b> ' +
+        (f === 5 ? 'Cambia la sesión por 20 min de bici suave y movilidad, o descansa. Dormir y comer bien hoy te hace más rápido que entrenar agotado.'
+          : 'Quita 1 serie de cada ejercicio, usa 10% menos peso y haz los sprints al 80%. Si a mitad de la sesión te sientes peor, para.') + '</div>';
+    }
+    var prev = addDays(d, -1), next = addDays(d, 1);
+    if (plan.tipo !== 'partido' && planFor(next) === PARTIDO && plan.tipo !== 'descanso')
+      html += '<div class="note"><b>Mañana hay partido.</b> Haz solo la mitad de las series con barra y omite los sprints en bici.</div>';
+    if (planFor(prev) === PARTIDO && plan.tipo !== 'descanso')
+      html += '<div class="note"><b>Ayer jugaste.</b> Si sientes las piernas cargadas, baja 10% el peso o cambia la sesión por bici suave.</div>';
+    html += '<div class="progress"><div class="track"><i style="width:' + Math.round(done / items.length * 100) + '%"></i></div><b>' + done + '/' + items.length + '</b></div>';
     plan.bloques.forEach(function (b) {
       html += '<div class="block-title">' + esc(b.n) + '</div><div class="items">';
       b.items.forEach(function (i) {
@@ -506,7 +603,7 @@ nav.tabs button[aria-current="page"] { color: var(--cone); }
 
   // ---------- Comida ----------
   function renderComida() {
-    var d = TODAY, tipo = PLAN[d.getDay()].tipo, m = macrosFor(tipo), l = dayLog(TODAY_ISO);
+    var tipo = planFor(TODAY).tipo, m = macrosFor(tipo), l = dayLog(TODAY_ISO);
     $('foodPill').className = 'pill ' + tipo; $('foodPill').textContent = 'Día de ' + TIPO_LABEL[tipo].toLowerCase();
     $('macros').innerHTML =
       '<div class="macro"><span class="v">' + m.kcal + '</span><span class="l">kcal</span></div>' +
@@ -514,6 +611,7 @@ nav.tabs button[aria-current="page"] { color: var(--cone); }
       '<div class="macro"><span class="v">' + m.carb + ' g</span><span class="l">Carbohidratos</span></div>' +
       '<div class="macro"><span class="v">' + m.fat + ' g</span><span class="l">Grasa</span></div>';
     $('macroNote').textContent = tipo === 'cancha' ? 'Día de cancha: un poco más de carbohidrato para rendir en los sprints.' :
+      tipo === 'partido' ? 'Día de partido: el día con más carbohidrato de la semana. Come bien antes y después de jugar.' :
       tipo === 'descanso' ? 'Día de descanso: menos carbohidrato, misma proteína para cuidar el músculo.' :
       'Día en casa: mantén la proteína alta (unos ' + Math.round(m.prot / 4) + ' g por comida).';
     var ml = Math.round(state.profile.peso * 35 / 100) * 100 + (tipo === 'descanso' ? 0 : 700);
@@ -522,16 +620,28 @@ nav.tabs button[aria-current="page"] { color: var(--cone); }
     var wh = '';
     for (var i = 0; i < glasses; i++) wh += '<button type="button" class="glass' + (i < l.water ? ' on' : '') + '" data-glass="' + i + '" aria-label="Vaso ' + (i + 1) + '"></button>';
     $('water').innerHTML = wh + '<span class="small muted">' + l.water + ' de ' + glasses + '</span>';
-    var meals = MEALS[tipo], mh = '', n = 0;
-    meals.forEach(function (mm) {
-      var on = !!l.meals[mm.id]; if (on) n++;
-      mh += '<div class="item' + (on ? ' done' : '') + '"><input type="checkbox" id="ml-' + mm.id + '" data-meal="' + mm.id + '"' + (on ? ' checked' : '') + '>' +
-        '<label for="ml-' + mm.id + '"><span class="t">' + esc(mm.t) + '</span><span class="d">' + esc(mm.d) + '</span></label><span></span></div>';
-    });
-    $('meals').innerHTML = mh;
-    $('mealBar').style.width = Math.round(n / meals.length * 100) + '%';
-    $('mealTxt').textContent = n + '/' + meals.length;
+    // Lo que comí
+    var meta = 4, n = l.comidas.filter(function (c) { return c.prot; }).length;
+    $('mealBar').style.width = Math.min(100, Math.round(n / meta * 100)) + '%';
+    $('mealTxt').textContent = n + '/' + meta + ' comidas con proteína';
+    $('foodList').innerHTML = l.comidas.length ? l.comidas.map(function (c, i) {
+      return '<div class="food"><div class="x"><span class="w">' + esc(c.tiempo) + '</span> ' + (c.prot ? '<span class="pr">· proteína</span>' : '') + '<div>' + esc(c.txt) + '</div></div>' +
+        '<button type="button" class="btn danger sm" data-delfood="' + i + '" aria-label="Quitar">Quitar</button></div>';
+    }).join('') : '<p class="small muted">Todavía no anotas nada hoy. Escribe tu desayuno arriba y toca Agregar.</p>';
+    // Plato
+    var tort = tipo === 'cancha' || tipo === 'partido' ? '3–4 tortillas o 1½ puños de arroz' : tipo === 'descanso' ? '1–2 tortillas o ½ puño de arroz' : '2–3 tortillas o 1 puño de arroz';
+    $('plate').innerHTML =
+      '<div><b>Proteína</b>1–2 palmas de tu mano: 2–3 huevos, un bistec, pollo, un pedazo de queso fresco o un vaso de leche</div>' +
+      '<div><b>Tortilla o arroz</b>' + tort + '</div>' +
+      '<div><b>Verdura</b>2 puños: nopales, calabaza, quelites, jitomate, chile, lo que haya en la huerta</div>' +
+      '<div><b>Frijoles</b>½ taza, como un puño cerrado. Cuentan como carbohidrato y algo de proteína</div>' +
+      '<div><b>Grasa</b>1 pulgar: aguacate, manteca o aceite al cocinar. Ojo con lo frito, se suma rápido</div>';
+    $('ideas').innerHTML = MEALS[tipo === 'partido' ? 'cancha' : tipo].map(function (mm) { return '<li><b>' + esc(mm.t) + ':</b> ' + esc(mm.d) + '</li>'; }).join('');
   }
+  function renderChips() {
+    $('chips').innerHTML = CHIPS.map(function (c) { return '<button type="button" class="chip' + (c[1] ? ' p' : '') + '" data-chip="' + esc(c[0]) + '" data-p="' + c[1] + '">' + esc(c[0]) + '</button>'; }).join('');
+  }
+  (function setTiempo() { var h = new Date().getHours(); $('fd-tiempo').value = h < 11 ? 'Desayuno' : h < 13 ? 'Almuerzo' : h < 18 ? 'Comida' : 'Cena'; })();
 
   // ---------- InBody ----------
   var METRICS = [
@@ -635,7 +745,31 @@ nav.tabs button[aria-current="page"] { color: var(--cone); }
     if (t.dataset.kg) { state.kg[t.dataset.kg] = t.value; save(); toast('Kilos guardados'); }
   });
   $('water').addEventListener('click', function (e) { var b = e.target.closest('[data-glass]'); if (!b) return; var l = dayLog(TODAY_ISO), i = +b.dataset.glass; l.water = (l.water === i + 1) ? i : i + 1; save(); renderComida(); });
-  $('meals').addEventListener('change', function (e) { var t = e.target; if (!t.dataset.meal) return; var l = dayLog(TODAY_ISO); if (t.checked) l.meals[t.dataset.meal] = true; else delete l.meals[t.dataset.meal]; save(); renderComida(); });
+  $('session').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-fat],[data-partido]'); if (!b) return;
+    if (b.dataset.fat) { var l = dayLog(sel), v = +b.dataset.fat; l.cansancio = l.cansancio === v ? 0 : v; save(); renderSession(); renderHero(); return; }
+    var p = b.dataset.partido, wk = weekKey(parse(sel));
+    if (p === 'null') delete state.partidos[wk]; else state.partidos[wk] = +p;
+    save(); renderWeek(); renderSession(); renderComida(); renderHero();
+    toast(p === 'null' ? 'Sin partido esta semana' : 'Partido el ' + (p === '6' ? 'sábado' : 'domingo'));
+  });
+  $('chips').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-chip]'); if (!b) return;
+    var t = $('fd-txt'); t.value = t.value.trim() ? t.value.trim().replace(/,$/, '') + ', ' + b.dataset.chip.toLowerCase() : b.dataset.chip;
+    if (b.dataset.p === '1') $('fd-prot').checked = true;
+  });
+  function addFood() {
+    var txt = $('fd-txt').value.trim();
+    if (!txt) { $('fd-msg').textContent = 'Escribe qué comiste o toca los botones.'; return; }
+    dayLog(TODAY_ISO).comidas.push({ tiempo: $('fd-tiempo').value, txt: txt, prot: $('fd-prot').checked });
+    save(); $('fd-txt').value = ''; $('fd-prot').checked = false; $('fd-msg').textContent = ''; renderComida(); toast('Comida anotada');
+  }
+  $('fd-add').addEventListener('click', addFood);
+  $('fd-txt').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); addFood(); } });
+  $('foodList').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-delfood]'); if (!b) return;
+    dayLog(TODAY_ISO).comidas.splice(+b.dataset.delfood, 1); save(); renderComida();
+  });
   $('metricSeg').addEventListener('click', function (e) { var b = e.target.closest('[data-metric]'); if (!b) return; metric = b.dataset.metric; renderInbody(); });
 
   var FIELDS = ['peso', 'musculo', 'grasaKg', 'grasaPct', 'visceral', 'agua', 'tmb', 'puntaje'];
@@ -681,7 +815,7 @@ nav.tabs button[aria-current="page"] { color: var(--cone); }
     try {
       var s = JSON.parse($('impTxt').value);
       if (!s || !s.profile || !Array.isArray(s.inbody)) throw new Error('x');
-      state = { profile: Object.assign(state.profile, s.profile), log: s.log || {}, kg: s.kg || {}, inbody: s.inbody };
+      state = { profile: Object.assign(state.profile, s.profile), log: s.log || {}, kg: s.kg || {}, partidos: s.partidos || {}, inbody: s.inbody };
       save(); renderAll(); $('impMsg').textContent = 'Respaldo restaurado.'; $('impTxt').value = '';
     } catch (e) { $('impMsg').textContent = 'Ese texto no es un respaldo válido. Copia el texto completo desde “Mostrar respaldo”.'; }
   });
@@ -700,6 +834,7 @@ nav.tabs button[aria-current="page"] { color: var(--cone); }
   });
   window.addEventListener('hashchange', function () { show(location.hash.slice(1)); });
 
+  renderChips();
   renderAll();
   show(location.hash.slice(1));
 })();
