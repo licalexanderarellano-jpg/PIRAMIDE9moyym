@@ -173,6 +173,12 @@ nav.tabs button[aria-current="page"] { color: var(--cone); }
 .credit { font-size: 11px; color: var(--muted); }
 [hidden] { display: none !important; }
 .how .body > .btn { justify-self: center; }
+.goal { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: start; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.goal .gt { display: grid; gap: 2px; min-width: 0; }
+.goal .gv { font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 999px; border: 1px solid currentColor; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.gv.good { color: var(--good); } .gv.warn { color: var(--warn); } .gv.flat { color: var(--muted); }
+.goal.now .gt b { color: var(--cone); }
+@media (max-width: 480px) { .goal { grid-template-columns: 1fr; } .goal .gv { justify-self: start; white-space: normal; } }
 .how .anim { width: 100%; max-width: 260px; height: auto; display: block; justify-self: center; background: var(--surface); border-radius: 8px; }
 .how ol { margin: 0; padding-left: 18px; display: grid; gap: 3px; }
 .how a { color: var(--ink); font-weight: 600; display: inline-flex; align-items: center; gap: 6px; text-decoration: none; border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 4px 12px; justify-self: start; }
@@ -211,7 +217,7 @@ nav.tabs button[aria-current="page"] { color: var(--cone); }
   <div class="wrap">
     <div class="eyebrow" id="heroDate">Hoy</div>
     <h1>Cancha y Casa</h1>
-    <div class="sub">Plan para bajar grasa y ganar fuerza y velocidad en el fútbol.</div>
+    <div class="sub">Rumbo a la liga de veteranos +35 en tu mejor forma, mientras sigues en libre.</div>
     <div class="stats" id="heroStats"></div>
   </div>
 </header>
@@ -299,6 +305,7 @@ nav.tabs button[aria-current="page"] { color: var(--cone); }
       <form class="form" id="ibForm" novalidate>
         <div class="field"><label for="ib-fecha">Fecha</label><input id="ib-fecha" type="date" required></div>
         <div class="field"><label for="ib-peso">Peso (kg)</label><input id="ib-peso" type="number" step="0.1" inputmode="decimal" required></div>
+        <div class="field"><label for="ib-cintura">Cintura a la altura del ombligo (cm)</label><input id="ib-cintura" type="number" step="0.5" inputmode="decimal"></div>
         <div class="field"><label for="ib-musculo">Masa músculo esquelético (kg)</label><input id="ib-musculo" type="number" step="0.1" inputmode="decimal"></div>
         <div class="field"><label for="ib-grasaKg">Masa grasa corporal (kg)</label><input id="ib-grasaKg" type="number" step="0.1" inputmode="decimal"></div>
         <div class="field"><label for="ib-grasaPct">Porcentaje de grasa (PGC %)</label><input id="ib-grasaPct" type="number" step="0.1" inputmode="decimal"></div>
@@ -314,10 +321,36 @@ nav.tabs button[aria-current="page"] { color: var(--cone); }
       <div class="table-wrap"><table id="ibTable"></table></div>
       <div class="note"><b>Cómo leerlo:</b> lo ideal es que baje la masa grasa y el porcentaje de grasa mientras el músculo esquelético se mantiene o sube. Si el peso baja pero el músculo también cae, sube la proteína y no te saltes las sesiones con barra. Grasa visceral menor a 10 es el rango sano.</div>
     </div>
+    <div class="card">
+      <h2>Pruebas físicas</h2>
+      <p class="small muted">Hazlas cada 4 semanas en día de cancha, después de calentar. Así ves si ganas velocidad, resistencia y toque. Deja vacío lo que no hayas medido.</p>
+      <form class="form" id="tsForm" novalidate>
+        <div class="field"><label for="ts-fecha">Fecha</label><input id="ts-fecha" type="date"></div>
+        <div class="field"><label for="ts-sprint">Sprint 20 m (segundos)</label><input id="ts-sprint" type="number" step="0.01" inputmode="decimal"></div>
+        <div class="field"><label for="ts-agil">Prueba 5-10-5 (segundos)</label><input id="ts-agil" type="number" step="0.01" inputmode="decimal"></div>
+        <div class="field"><label for="ts-cooper">Correr 12 min (metros)</label><input id="ts-cooper" type="number" step="10" inputmode="numeric"></div>
+        <div class="field"><label for="ts-toques">Toques seguidos (récord)</label><input id="ts-toques" type="number" step="1" inputmode="numeric"></div>
+      </form>
+      <div class="row"><button class="btn" id="tsSave" type="button">Guardar pruebas</button><span class="small muted" id="tsMsg"></span></div>
+      <div class="table-wrap"><table id="tsTable"></table></div>
+      <ul class="list small muted">
+        <li><b>Sprint 20 m:</b> salida parado; alguien toma el tiempo con el celular. Anota el mejor de 3 intentos.</li>
+        <li><b>12 minutos:</b> corre lo más que puedas en la cancha; cuenta vueltas y multiplica por los metros de una vuelta.</li>
+        <li><b>Toques:</b> el mejor de 5 intentos, con cualquier parte del cuerpo menos las manos.</li>
+      </ul>
+    </div>
   </section>
 
   <!-- PERFIL -->
   <section class="view" id="v-perfil" hidden>
+    <div class="card">
+      <h2>Mis metas rumbo a los 35</h2>
+      <div id="goals"></div>
+    </div>
+    <div class="card">
+      <h3>Etapas</h3>
+      <div id="stages"></div>
+    </div>
     <div class="card">
       <h2>Mis datos</h2>
       <form class="form" id="pfForm" novalidate>
@@ -328,6 +361,8 @@ nav.tabs button[aria-current="page"] { color: var(--cone); }
         <div class="field"><label for="pf-meta">Peso meta (kg)</label><input id="pf-meta" type="number" step="0.5" inputmode="decimal"></div>
         <div class="field"><label for="pf-deficit">Déficit diario</label><select id="pf-deficit"><option value="300">Suave · −300 kcal</option><option value="450">Moderado · −450 kcal</option><option value="600">Rápido · −600 kcal</option></select></div>
         <div class="field"><label for="pf-inicio">Inicio del plan</label><input id="pf-inicio" type="date"></div>
+        <div class="field"><label for="pf-cumple35">Día que cumples 35</label><input id="pf-cumple35" type="date"></div>
+        <div class="field"><label for="pf-metaGrasa">Meta de % de grasa</label><input id="pf-metaGrasa" type="number" step="0.5" inputmode="decimal"></div>
       </form>
       <p class="small muted">La estatura viene en 175 cm como valor de ejemplo. Pon la tuya para que las calorías salgan bien.</p>
       <div class="note" id="calcNote"></div>
@@ -348,7 +383,7 @@ nav.tabs button[aria-current="page"] { color: var(--cone); }
   <div class="in">
     <button data-tab="entreno" type="button"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7l4 3-1.5 4.5h-5L8 10z"/></svg>Entreno</button>
     <button data-tab="comida" type="button"><svg viewBox="0 0 24 24"><path d="M4 11h16a8 8 0 0 1-16 0z"/><path d="M8 7c0-1.5 1-2 1-3M12 7c0-1.5 1-2 1-3M16 7c0-1.5 1-2 1-3"/></svg>Comida</button>
-    <button data-tab="inbody" type="button"><svg viewBox="0 0 24 24"><path d="M4 19V5M4 19h16"/><path d="M7 15l4-4 3 3 5-6"/></svg>InBody</button>
+    <button data-tab="inbody" type="button"><svg viewBox="0 0 24 24"><path d="M4 19V5M4 19h16"/><path d="M7 15l4-4 3 3 5-6"/></svg>Progreso</button>
     <button data-tab="perfil" type="button"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/></svg>Perfil</button>
   </div>
 </nav>
@@ -369,9 +404,11 @@ nav.tabs button[aria-current="page"] { color: var(--cone); }
         { id: 'rumano', t: 'Peso muerto rumano', d: '3 × 8 · baja controlado 3 segundos', kg: true },
         { id: 'remo', t: 'Remo con barra', d: '4 × 8 · espalda recta', kg: true },
         { id: 'militar', t: 'Press militar de pie', d: '3 × 8', kg: true },
+        { id: 'lagartijas', t: 'Lagartijas', d: '3 × máximo, dejando 2 en reserva · pecho firme' },
         { id: 'zancada', t: 'Zancadas hacia atrás con barra', d: '3 × 8 por pierna', kg: true },
         { id: 'l-plancha', t: 'Plancha frontal', d: '3 × 40 s' } ] },
       { n: 'Cierre', items: [
+        { id: 'l-bal', t: 'Dominadas de balón', d: '10 min · cuenta tu récord de toques seguidos; alterna derecha, izquierda y muslo' },
         { id: 'l-bici', t: 'Bici zona 2', d: '12 min a ritmo en el que puedas hablar' },
         { id: 'l-est', t: 'Estiramiento', d: '5 min: cuádriceps, isquios, flexor de cadera' } ] } ] },
     2: { tipo: 'cancha', titulo: 'Velocidad y técnica', foco: 'Aceleración y salida explosiva', dur: '75–90 min', bloques: [
@@ -395,7 +432,11 @@ nav.tabs button[aria-current="page"] { color: var(--cone); }
         { id: 'x-k1', t: 'Dead bug', d: '10 por lado' },
         { id: 'x-k2', t: 'Plancha lateral', d: '30 s por lado' },
         { id: 'x-k3', t: 'Puente de glúteo con barra', d: '12 repeticiones', kg: true },
-        { id: 'x-k4', t: 'Copenhague corto (aductor)', d: '20 s por lado · protege la ingle' } ] },
+        { id: 'x-k4', t: 'Copenhague corto (aductor)', d: '20 s por lado · protege la ingle' },
+        { id: 'x-k5', t: 'Crunch inverso', d: '12 repeticiones lentas · abdomen bajo' },
+        { id: 'x-k6', t: 'Nórdico de isquios', d: '5 repeticiones · previene desgarres' } ] },
+      { n: 'Balón', items: [
+        { id: 'x-bal', t: 'Pases a la pared', d: '10 min: 50 con cada pierna, control orientado y regreso de primera' } ] },
       { n: 'Movilidad', items: [
         { id: 'x-m1', t: 'Movilidad', d: '10 min: cadera, tobillo, espalda alta' } ] } ] },
     4: { tipo: 'cancha', titulo: 'Agilidad y resistencia', foco: 'Cambios de dirección y aguantar el partido', dur: '75–90 min', bloques: [
@@ -424,7 +465,9 @@ nav.tabs button[aria-current="page"] { color: var(--cone); }
         { id: 'pantorrilla', t: 'Elevación de talones con barra', d: '3 × 15', kg: true } ] },
       { n: 'HIIT en bici', items: [
         { id: 'v-h1', t: 'Sprints en bici', d: '8 × (20 s máximo / 100 s suave) · sube la resistencia en cada sprint' },
-        { id: 'v-h2', t: 'Vuelta a la calma', d: '5 min suave' } ] } ] },
+        { id: 'v-h2', t: 'Vuelta a la calma', d: '5 min suave' } ] },
+      { n: 'Balón', items: [
+        { id: 'v-bal', t: 'Conducción en espacio corto', d: '10 min entre 4 conos o botellas: interior, exterior y suela, con las dos piernas' } ] } ] },
     6: { tipo: 'descanso', titulo: 'Descanso activo', foco: 'Recuperar', dur: '30–45 min', bloques: [
       { n: 'Opciones', items: [
         { id: 's-2', t: 'Caminata o bici muy suave', d: '30–45 min sin cansarte' },
@@ -480,6 +523,12 @@ nav.tabs button[aria-current="page"] { color: var(--cone); }
     'x-k1': ['Boca arriba, brazos al techo, rodillas a 90°.', 'Pega la espalda baja al piso todo el tiempo.', 'Estira un brazo y la pierna contraria sin tocar el piso, regresa y cambia.'],
     'x-k2': ['Apoya el antebrazo debajo del hombro.', 'Cuerpo en línea recta de pies a cabeza.', 'No dejes caer la cadera.'],
     'x-k4': ['De lado, apoya el antebrazo y la rodilla de arriba sobre una silla o cama.', 'Sube la cadera hasta formar una línea recta.', 'Empieza con rodilla apoyada; con el tiempo puedes apoyar el pie.'],
+    lagartijas: ['Manos un poco más abiertas que los hombros.', 'Cuerpo recto de cabeza a talones; aprieta abdomen.', 'Baja hasta que el pecho casi toque el piso, codos a 45°.', 'Si no salen 8, apoya las rodillas o las manos en una silla.'],
+    'x-k5': ['Boca arriba, rodillas dobladas a 90° y brazos a los lados.', 'Lleva las rodillas al pecho despegando la cadera del piso.', 'Baja lento sin dejar caer las piernas.'],
+    'x-k6': ['De rodillas sobre un cojín, con los tobillos atorados bajo un sillón o sujetos por alguien.', 'Cuerpo recto de rodillas a cabeza.', 'Déjate caer hacia adelante lo más lento que puedas.', 'Detén la caída con las manos y regresa empujando. Con el tiempo bajarás más.'],
+    'l-bal': ['Suelta el balón y pégale con el empeine, tobillo firme.', 'Toques suaves, a la altura de la rodilla.', 'Cuando domines un pie, alterna derecho, izquierdo y muslo.', 'Anota tu récord en Progreso.'],
+    'x-bal': ['Párate a 3–5 m de una pared.', 'Pasa con el interior; recibe orientando el balón hacia un lado.', 'Haz series de pase y regreso de primera, sin controlar.', 'Usa la pierna mala la mitad del tiempo.'],
+    'v-bal': ['Pon 4 conos o botellas en un cuadro de 4 × 4 m.', 'Conduce con toques cortos: interior, exterior y suela.', 'Cambia de dirección en cada cono con la cabeza levantada.'],
     'l-plancha': ['Antebrazos bajo los hombros.', 'Cuerpo recto; aprieta abdomen y glúteos.', 'Respira normal, no sostengas el aire.'],
     'm-s1': ['Inclínate hacia adelante en los primeros pasos.', 'Pasos cortos y rápidos que se alargan.', 'Brazos fuertes de la cadera a la cara.'],
     'm-s2': ['Arranca desde acostado, sentado o de rodillas.', 'Levántate y acelera lo más rápido posible a la señal.', 'Pide a alguien que aplauda o grite la salida.'],
@@ -492,7 +541,9 @@ nav.tabs button[aria-current="page"] { color: var(--cone); }
     'x-k1': 'dead bug ejercicio', 'j-a1': 'pro agility test 5-10-5', 'm-s2': 'salidas de sprint con reacción fútbol', 'm-s1': 'técnica de aceleración sprint fútbol',
     'v-h1': 'hiit bicicleta spinning sprints 20 segundos', 'x-b1': 'spinning zona 2', 'm-c2': 'calentamiento dinámico fútbol skipping carioca',
     'j-a2': 'zigzag conos agilidad fútbol', 'j-a3': 'ejercicio frenado y cambio de dirección fútbol', 'x-k3': 'puente de glúteo con barra',
-    'l-c2': 'movilidad cadera tobillo 90 90', 'x-m1': 'rutina de movilidad para futbolistas', 'v-salto': 'jump squat técnica'
+    'l-c2': 'movilidad cadera tobillo 90 90', 'x-k6': 'nordic hamstring curl en casa principiante', 'x-k5': 'crunch inverso técnica',
+    'l-bal': 'ejercicios dominadas de balón para mejorar toque', 'x-bal': 'ejercicios de pared fútbol pase y control', 'v-bal': 'conducción de balón en espacio reducido ejercicios',
+    lagartijas: 'lagartijas técnica correcta', 'x-m1': 'rutina de movilidad para futbolistas', 'v-salto': 'jump squat técnica'
   };
   var YT = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M23 7.2a3 3 0 0 0-2.1-2.1C19 4.6 12 4.6 12 4.6s-7 0-8.9.5A3 3 0 0 0 1 7.2 31 31 0 0 0 .5 12a31 31 0 0 0 .5 4.8 3 3 0 0 0 2.1 2.1c1.9.5 8.9.5 8.9.5s7 0 8.9-.5a3 3 0 0 0 2.1-2.1 31 31 0 0 0 .5-4.8 31 31 0 0 0-.5-4.8zM9.7 15.1V8.9l5.8 3.1z"/></svg>';
   // ---------- Figuras animadas (vista de lado, mirando a la derecha) ----------
@@ -543,7 +594,7 @@ nav.tabs button[aria-current="page"] { color: var(--cone); }
   }
   var REDUCED = false; try { REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) {}
   // Fotos reales: Free Exercise DB (dominio público), posición inicial (0) y final (1)
-  var PHOTOS = { sentadilla: 1, rumano: 1, remo: 1, militar: 1, zancada: 1, pesomuerto: 1, hipthrust: 1, 'x-k3': 1, pantorrilla: 1, pressuelo: 1, 'v-salto': 1, 'x-k1': 1, 'l-plancha': 1 };
+  var PHOTOS = { sentadilla: 1, rumano: 1, remo: 1, militar: 1, zancada: 1, pesomuerto: 1, hipthrust: 1, 'x-k3': 1, pantorrilla: 1, pressuelo: 1, 'v-salto': 1, 'x-k1': 1, 'l-plancha': 1, lagartijas: 1, 'x-k5': 1, 'x-k6': 1 };
   function photoHtml(i) {
     if (!PHOTOS[i.id]) return '';
     var src = function (k) { return 'img/ejercicios/' + i.id + '-' + k + '.jpg'; };
@@ -631,12 +682,13 @@ nav.tabs button[aria-current="page"] { color: var(--cone); }
   // ---------- Estado ----------
   var KEY = 'cancha-y-casa-v1';
   var state = {
-    profile: { edad: 33, peso: 78, estatura: 175, sexo: 'h', meta: 72, deficit: 450, inicio: iso(monday(TODAY)) },
-    log: {}, kg: {}, partidos: {},
+    profile: { edad: 33, peso: 78, estatura: 175, sexo: 'h', meta: 72, deficit: 450, inicio: iso(monday(TODAY)), metaGrasa: 13 },
+    log: {}, kg: {}, partidos: {}, tests: [],
     inbody: [{ fecha: TODAY_ISO, peso: 78 }]
   };
   try { var raw = localStorage.getItem(KEY); if (raw) { var s = JSON.parse(raw); if (s && s.profile) state = Object.assign(state, s); } } catch (e) {}
-  state.partidos = state.partidos || {};
+  state.partidos = state.partidos || {}; state.tests = state.tests || [];
+  if (state.profile.metaGrasa === undefined) state.profile.metaGrasa = 13;
   function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
   function dayLog(date) { if (!state.log[date]) state.log[date] = { done: {}, water: 0 }; var l = state.log[date]; l.done = l.done || {}; l.comidas = l.comidas || []; l.water = l.water || 0; return l; }
 
@@ -696,6 +748,7 @@ nav.tabs button[aria-current="page"] { color: var(--cone); }
       '<span class="stat"><b>' + sessions + '/5</b> sesiones esta semana</span>' +
       '<span class="stat"><b>' + peso + ' kg</b> → meta ' + p.meta + ' kg</span>' +
       '<span class="stat"><b>' + falta.toFixed(1) + ' kg</b> por bajar</span>' +
+      (p.cumple35 ? '<span class="stat"><b>' + Math.max(0, Math.round((parse(p.cumple35) - TODAY) / (7 * 864e5))) + ' semanas</b> para veteranos</span>' : '') +
       (fn ? '<span class="stat">Cansancio de la semana <b>' + (fsum / fn).toFixed(1) + '/5</b></span>' : '');
   }
 
@@ -798,6 +851,7 @@ nav.tabs button[aria-current="page"] { color: var(--cone); }
     { k: 'peso', l: 'Peso', u: 'kg', better: -1 },
     { k: 'grasaPct', l: '% Grasa', u: '%', better: -1 },
     { k: 'musculo', l: 'Músculo', u: 'kg', better: 1 },
+    { k: 'cintura', l: 'Cintura', u: 'cm', better: -1 },
     { k: 'grasaKg', l: 'Grasa', u: 'kg', better: -1 },
     { k: 'visceral', l: 'Visceral', u: '', better: -1 }
   ];
@@ -822,10 +876,10 @@ nav.tabs button[aria-current="page"] { color: var(--cone); }
     $('metricSeg').innerHTML = METRICS.map(function (m) { return '<button type="button" data-metric="' + m.k + '" aria-pressed="' + (m.k === metric) + '">' + m.l + '</button>'; }).join('');
     renderChart(rows);
     // Tabla
-    var th = '<thead><tr><th>Fecha</th><th>Peso</th><th>Músculo</th><th>Grasa kg</th><th>PGC %</th><th>Visceral</th><th>Agua L</th><th>TMB</th><th>Puntos</th><th></th></tr></thead><tbody>';
+    var th = '<thead><tr><th>Fecha</th><th>Peso</th><th>Cintura</th><th>Músculo</th><th>Grasa kg</th><th>PGC %</th><th>Visceral</th><th>Agua L</th><th>TMB</th><th>Puntos</th><th></th></tr></thead><tbody>';
     rows.slice().reverse().forEach(function (r) {
       var c = function (v) { return num(v) === null ? '<span class="muted">—</span>' : v; };
-      th += '<tr><td>' + fmtDate(r.fecha) + '</td><td>' + c(r.peso) + '</td><td>' + c(r.musculo) + '</td><td>' + c(r.grasaKg) + '</td><td>' + c(r.grasaPct) + '</td><td>' + c(r.visceral) + '</td><td>' + c(r.agua) + '</td><td>' + c(r.tmb) + '</td><td>' + c(r.puntaje) + '</td>' +
+      th += '<tr><td>' + fmtDate(r.fecha) + '</td><td>' + c(r.peso) + '</td><td>' + c(r.cintura) + '</td><td>' + c(r.musculo) + '</td><td>' + c(r.grasaKg) + '</td><td>' + c(r.grasaPct) + '</td><td>' + c(r.visceral) + '</td><td>' + c(r.agua) + '</td><td>' + c(r.tmb) + '</td><td>' + c(r.puntaje) + '</td>' +
         '<td><button type="button" class="btn danger sm" data-del="' + r.fecha + '">Borrar</button></td></tr>';
     });
     $('ibTable').innerHTML = th + '</tbody>';
@@ -874,9 +928,10 @@ nav.tabs button[aria-current="page"] { color: var(--cone); }
   function niceStep(raw) { var e = Math.pow(10, Math.floor(Math.log10(raw))), f = raw / e; return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 5 ? 5 : 10) * e; }
 
   // ---------- Perfil ----------
-  var PF = ['edad', 'peso', 'estatura', 'sexo', 'meta', 'deficit', 'inicio'];
+  var PF = ['edad', 'peso', 'estatura', 'sexo', 'meta', 'deficit', 'inicio', 'cumple35', 'metaGrasa'];
   function renderPerfil() {
-    PF.forEach(function (k) { $('pf-' + k).value = state.profile[k]; });
+    PF.forEach(function (k) { $('pf-' + k).value = state.profile[k] === undefined ? '' : state.profile[k]; });
+    renderGoals();
     var c = calc(), p = state.profile;
     var weeks = Math.max(0, (p.peso - p.meta) / 0.5);
     $('calcNote').innerHTML = 'Metabolismo basal estimado: <b>' + c.bmr + ' kcal</b>. Con 5 días de entrenamiento gastas cerca de <b>' + c.tdee + ' kcal</b> al día. ' +
@@ -884,8 +939,95 @@ nav.tabs button[aria-current="page"] { color: var(--cone); }
       'Si en 2 semanas tu peso no baja, quita 150 kcal; si te sientes sin fuerza en la cancha, agrega 150 kcal de carbohidrato.';
   }
 
+  // ---------- Pruebas físicas ----------
+  var TESTS = [
+    { k: 'sprint', l: 'Sprint 20 m', u: 's', low: true },
+    { k: 'agil', l: '5-10-5', u: 's', low: true },
+    { k: 'cooper', l: '12 min', u: 'm', low: false },
+    { k: 'toques', l: 'Toques', u: '', low: false }
+  ];
+  function bestTest(k) {
+    var t = TESTS.filter(function (x) { return x.k === k; })[0], best = null;
+    state.tests.forEach(function (r) { var v = num(r[k]); if (v === null) return; if (best === null || (t.low ? v < best : v > best)) best = v; });
+    return best;
+  }
+  function renderTests() {
+    var rows = state.tests.slice().sort(function (a, b) { return a.fecha < b.fecha ? 1 : -1; });
+    if (!rows.length) { $('tsTable').innerHTML = '<tbody><tr><td class="muted" style="text-align:left;white-space:normal">Aún no hay pruebas. Haz las primeras el próximo día de cancha.</td></tr></tbody>'; return; }
+    var h = '<thead><tr><th>Fecha</th>' + TESTS.map(function (t) { return '<th>' + t.l + '</th>'; }).join('') + '<th></th></tr></thead><tbody>';
+    rows.forEach(function (r) {
+      h += '<tr><td>' + fmtDate(r.fecha) + '</td>' + TESTS.map(function (t) {
+        var v = num(r[t.k]); if (v === null) return '<td class="muted">—</td>';
+        var best = v === bestTest(t.k) && rows.length > 1;
+        return '<td' + (best ? ' style="color:var(--good);font-weight:700"' : '') + '>' + v + (t.u ? ' ' + t.u : '') + '</td>';
+      }).join('') + '<td><button type="button" class="btn danger sm" data-deltest="' + r.fecha + '">Borrar</button></td></tr>';
+    });
+    $('tsTable').innerHTML = h + '</tbody>';
+  }
+  $('ts-fecha').value = TODAY_ISO;
+  $('tsSave').addEventListener('click', function () {
+    var f = $('ts-fecha').value, r = { fecha: f }, any = false;
+    if (!f) { $('tsMsg').textContent = 'Pon la fecha de las pruebas.'; return; }
+    TESTS.forEach(function (t) { var v = num($('ts-' + t.k).value); if (v !== null) { r[t.k] = v; any = true; } });
+    if (!any) { $('tsMsg').textContent = 'Anota al menos una prueba.'; return; }
+    state.tests = state.tests.filter(function (x) { return x.fecha !== f; }); state.tests.push(r); save();
+    TESTS.forEach(function (t) { $('ts-' + t.k).value = ''; });
+    $('tsMsg').textContent = 'Pruebas del ' + fmtDate(f) + ' guardadas.'; renderTests(); renderGoals();
+  });
+  var pendingTest = null;
+  $('tsTable').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-deltest]'); if (!b) return;
+    if (pendingTest !== b.dataset.deltest) { pendingTest = b.dataset.deltest; b.textContent = '¿Seguro?'; return; }
+    state.tests = state.tests.filter(function (x) { return x.fecha !== pendingTest; }); pendingTest = null; save(); renderTests(); renderGoals();
+  });
+
+  // ---------- Metas ----------
+  function ibVals(k) { return sorted().filter(function (r) { return num(r[k]) !== null; }).map(function (r) { return +r[k]; }); }
+  function renderGoals() {
+    var p = state.profile, man = p.sexo !== 'm';
+    var peso = ibVals('peso'), grasa = ibVals('grasaPct'), mus = ibVals('musculo'), cin = ibVals('cintura');
+    var last = function (a) { return a.length ? a[a.length - 1] : null; };
+    var chg = function (a, u) { if (a.length < 2) return ''; var d = a[a.length - 1] - a[0]; return ' (' + (d > 0 ? '+' : '') + d.toFixed(1) + ' ' + u + ' desde el inicio)'; };
+    var rows = [];
+    var lp = last(peso) || p.peso;
+    rows.push(['Bajar de peso', lp + ' kg', 'Meta ' + p.meta + ' kg. ' + (lp > p.meta ? 'Faltan ' + (lp - p.meta).toFixed(1) + ' kg.' : 'Meta cumplida; ahora mantén.') + chg(peso, 'kg'), lp <= p.meta ? 'good' : 'warn']);
+    var lg = last(grasa), abs = man ? '12–14 %' : '20–23 %';
+    rows.push(['Abdomen marcado, menos pecho y menos cara', lg === null ? 'Sin dato' : lg + ' %', 'Meta ' + p.metaGrasa + ' % de grasa. El abdomen suele empezar a verse alrededor de ' + abs + '.' + chg(grasa, '%'), lg === null ? 'flat' : lg <= p.metaGrasa ? 'good' : 'warn']);
+    var lc = last(cin);
+    rows.push(['Cintura', lc === null ? 'Sin dato' : lc + ' cm', 'Mídela a la altura del ombligo junto con tu InBody. Si baja, estás perdiendo grasa del abdomen.' + chg(cin, 'cm'), lc === null ? 'flat' : cin.length > 1 && lc < cin[0] ? 'good' : 'warn']);
+    var lm = last(mus);
+    rows.push(['Más masa muscular', lm === null ? 'Sin dato' : lm + ' kg', 'Músculo esquelético del InBody. Mientras bajas de peso, la meta es que no baje.' + chg(mus, 'kg'), lm === null ? 'flat' : mus.length > 1 && lm >= mus[0] ? 'good' : 'warn']);
+    var sq = num(state.kg.sentadilla), dl = num(state.kg.pesomuerto);
+    rows.push(['Más fuerza', (sq ? 'Sentadilla ' + sq + ' kg' : 'Sentadilla —') + ' · ' + (dl ? 'Peso muerto ' + dl + ' kg' : 'Peso muerto —'),
+      'Metas: sentadilla de ' + Math.round(lp * 1.25) + ' kg (1.25 × tu peso) y peso muerto de ' + Math.round(lp * 1.5) + ' kg (1.5 × tu peso). Anota los kilos en cada sesión.',
+      sq && dl ? (sq >= lp * 1.25 && dl >= lp * 1.5 ? 'good' : 'warn') : 'flat']);
+    var bs = bestTest('sprint'), ba = bestTest('agil');
+    rows.push(['Más velocidad', bs === null && ba === null ? 'Sin dato' : (bs !== null ? bs + ' s en 20 m' : '') + (bs !== null && ba !== null ? ' · ' : '') + (ba !== null ? ba + ' s en 5-10-5' : ''), 'Tu mejor marca en Pruebas físicas. Cada décima que bajes es un paso de ventaja.', bs === null && ba === null ? 'flat' : 'good']);
+    var bc = bestTest('cooper');
+    rows.push(['Más resistencia', bc === null ? 'Sin dato' : bc + ' m en 12 min', 'Prueba de 12 minutos. Si sube cada mes, aguantas más el partido.', bc === null ? 'flat' : 'good']);
+    var bt = bestTest('toques');
+    rows.push(['Mejor toque de balón', bt === null ? 'Sin dato' : bt + ' toques', 'Récord de toques seguidos. Practica 10 minutos en cada sesión de casa.', bt === null ? 'flat' : 'good']);
+    $('goals').innerHTML = rows.map(function (r) {
+      return '<div class="goal"><div class="gt"><b>' + esc(r[0]) + '</b><span class="small muted">' + esc(r[2]) + '</span></div><span class="gv ' + r[3] + '">' + esc(r[1]) + '</span></div>';
+    }).join('') +
+      '<div class="note"><b>La grasa no se quita por zonas.</b> Abdomen, pecho y cara se afinan cuando baja tu porcentaje de grasa total, y ese es el número que más importa aquí. ' +
+      'Las lagartijas, el press y el remo dan forma al pecho. La cara también se desinflama con menos sal, menos alcohol y buen sueño. ' +
+      (man ? 'Si al bajar de grasa sigue un bulto firme detrás del pezón, consulta a un médico: puede ser ginecomastia y tiene tratamiento.' : '') + '</div>';
+    // Etapas
+    var months = Math.max(0, (TODAY - parse(p.inicio || TODAY_ISO)) / (30.44 * 864e5));
+    var st = [
+      ['Etapa 1 · Quitar grasa', 'Meses 1 a 6', 'Déficit de calorías, fuerza base con barra y mucha bici en zona 2. Aquí se ve el mayor cambio en abdomen y cara.'],
+      ['Etapa 2 · Músculo y potencia', 'Meses 7 a 12', 'Déficit suave o mantenimiento. Subes peso en la barra y agregas más saltos y sprints.'],
+      ['Etapa 3 · Rendimiento para veteranos', 'Mes 13 hasta los 35', 'Mantienes el peso, cuidas articulaciones con nórdicos y Copenhague, y afinas velocidad, resistencia y toque para llegar a la liga en tu mejor momento.']
+    ];
+    var cur = months < 6 ? 0 : months < 12 ? 1 : 2;
+    $('stages').innerHTML = st.map(function (x, i) {
+      return '<div class="goal' + (i === cur ? ' now' : '') + '"><div class="gt"><b>' + x[0] + '</b><span class="small muted">' + x[2] + '</span></div><span class="gv ' + (i < cur ? 'good' : i === cur ? 'warn' : 'flat') + '">' + (i === cur ? 'Ahora' : x[1]) + '</span></div>';
+    }).join('') + (p.cumple35 ? '' : '<p class="small muted">Pon abajo el día que cumples 35 para ver cuántas semanas faltan.</p>');
+  }
+
   // ---------- Render general ----------
-  function renderAll() { renderHero(); renderWeek(); renderSession(); renderComida(); renderInbody(); renderPerfil(); }
+  function renderAll() { renderHero(); renderWeek(); renderSession(); renderComida(); renderInbody(); renderTests(); renderPerfil(); }
 
   // ---------- Eventos ----------
   $('week').addEventListener('click', function (e) { var b = e.target.closest('[data-date]'); if (!b) return; sel = b.dataset.date; renderWeek(); renderSession(); });
@@ -922,7 +1064,7 @@ nav.tabs button[aria-current="page"] { color: var(--cone); }
   });
   $('metricSeg').addEventListener('click', function (e) { var b = e.target.closest('[data-metric]'); if (!b) return; metric = b.dataset.metric; renderInbody(); });
 
-  var FIELDS = ['peso', 'musculo', 'grasaKg', 'grasaPct', 'visceral', 'agua', 'tmb', 'puntaje'];
+  var FIELDS = ['peso', 'cintura', 'musculo', 'grasaKg', 'grasaPct', 'visceral', 'agua', 'tmb', 'puntaje'];
   $('ib-fecha').value = TODAY_ISO;
   $('ibSave').addEventListener('click', function () {
     var fecha = $('ib-fecha').value, peso = num($('ib-peso').value);
@@ -949,7 +1091,7 @@ nav.tabs button[aria-current="page"] { color: var(--cone); }
   $('pfForm').addEventListener('change', function () {
     PF.forEach(function (k) {
       var v = $('pf-' + k).value;
-      if (k === 'sexo' || k === 'inicio') { if (v) state.profile[k] = v; }
+      if (k === 'sexo' || k === 'inicio' || k === 'cumple35') { if (v) state.profile[k] = v; }
       else { var n = num(v); if (n !== null && n > 0) state.profile[k] = n; }
     });
     save(); renderAll(); toast('Datos actualizados');
@@ -965,7 +1107,7 @@ nav.tabs button[aria-current="page"] { color: var(--cone); }
     try {
       var s = JSON.parse($('impTxt').value);
       if (!s || !s.profile || !Array.isArray(s.inbody)) throw new Error('x');
-      state = { profile: Object.assign(state.profile, s.profile), log: s.log || {}, kg: s.kg || {}, partidos: s.partidos || {}, inbody: s.inbody };
+      state = { profile: Object.assign(state.profile, s.profile), log: s.log || {}, kg: s.kg || {}, partidos: s.partidos || {}, tests: s.tests || [], inbody: s.inbody };
       save(); renderAll(); $('impMsg').textContent = 'Respaldo restaurado.'; $('impTxt').value = '';
     } catch (e) { $('impMsg').textContent = 'Ese texto no es un respaldo válido. Copia el texto completo desde “Mostrar respaldo”.'; }
   });
