@@ -157,6 +157,7 @@ nav.tabs button[aria-current="page"] { color: var(--cone); }
 .how summary::before { content: "▸"; transition: transform .15s; }
 .how[open] summary::before { transform: rotate(90deg); }
 .how .body { margin-top: 6px; padding: 10px 12px; background: var(--surface-2); border-radius: 8px; display: grid; gap: 8px; }
+.how .anim { width: 100%; max-width: 260px; height: auto; display: block; justify-self: center; background: var(--surface); border-radius: 8px; }
 .how ol { margin: 0; padding-left: 18px; display: grid; gap: 3px; }
 .how a { color: var(--ink); font-weight: 600; display: inline-flex; align-items: center; gap: 6px; text-decoration: none; border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 4px 12px; justify-self: start; }
 .how a svg { width: 16px; height: 16px; fill: var(--bad); }
@@ -478,12 +479,78 @@ nav.tabs button[aria-current="page"] { color: var(--cone); }
     'l-c2': 'movilidad cadera tobillo 90 90', 'x-m1': 'rutina de movilidad para futbolistas', 'v-salto': 'jump squat técnica'
   };
   var YT = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M23 7.2a3 3 0 0 0-2.1-2.1C19 4.6 12 4.6 12 4.6s-7 0-8.9.5A3 3 0 0 0 1 7.2 31 31 0 0 0 .5 12a31 31 0 0 0 .5 4.8 3 3 0 0 0 2.1 2.1c1.9.5 8.9.5 8.9.5s7 0 8.9-.5a3 3 0 0 0 2.1-2.1 31 31 0 0 0 .5-4.8 31 31 0 0 0-.5-4.8zM9.7 15.1V8.9l5.8 3.1z"/></svg>';
-  var SKIP_HOW = /^(l-c1|l-c3|l-bici|l-est|m-c1|m-c3|m-s3|m-b2|m-e|j-c1|j-r1|j-b1|j-e|v-c1|v-h2|s-|d-|p-|a-4|a-5)/;
+  // ---------- Figuras animadas (vista de lado, mirando a la derecha) ----------
+  // Ángulos en grados: 0 = hacia arriba, positivo = hacia adelante. s pantorrilla, t muslo, b torso (absolutos);
+  // u brazo relativo al torso (180 = pegado al torso hacia abajo), f antebrazo relativo al brazo.
+  var ANIM = {
+    sentadilla: { bar: 'back', k: [{ s: 0, t: 0, b: 0, u: -150, f: 170 }, { s: 32, t: -88, b: 40, u: -150, f: 170 }] },
+    rumano: { bar: 'hand', k: [{ s: 5, t: -5, b: 0, u: 180, f: 0 }, { s: 10, t: -35, b: 75, u: 105, f: 0 }] },
+    remo: { bar: 'hand', k: [{ s: 10, t: -35, b: 55, u: 125, f: 0 }, { s: 10, t: -35, b: 55, u: 180, f: -55 }] },
+    militar: { bar: 'hand', k: [{ s: 0, t: 0, b: 0, u: 150, f: -140 }, { s: 0, t: 0, b: 0, u: 0, f: 0 }] },
+    zancada: { bar: 'back', leg2: true, k: [{ s: 0, t: 0, b: 0, u: -150, f: 170, t2: 180, s2: 180 }, { s: 10, t: -90, b: 5, u: -150, f: 170, t2: 205, s2: 265 }] },
+    pesomuerto: { bar: 'hand', k: [{ s: 25, t: -65, b: 70, u: 110, f: 0 }, { s: 0, t: 0, b: 0, u: 180, f: 0 }] },
+    hipthrust: { bar: 'hip', bench: true, ax: 130, k: [{ s: 0, t: -120, b: -72, u: 180, f: 0 }, { s: 0, t: -90, b: -90, u: 180, f: 0 }] },
+    pressuelo: { bar: 'hand', ax: 140, k: [{ s: -30, t: -120, b: -90, u: 205, f: -125 }, { s: -30, t: -120, b: -90, u: 90, f: 0 }] },
+    pantorrilla: { bar: 'back', toeFix: true, k: [{ s: 0, t: 0, b: 0, u: -150, f: 170, ay: 150 }, { s: 0, t: 0, b: 0, u: -150, f: 170, ay: 139 }] },
+    'x-k3': { bar: 'hip', ax: 135, k: [{ s: -25, t: -125, b: -95, u: 180, f: 0 }, { s: -25, t: -80, b: -134, u: 180, f: 0 }] },
+    'v-salto': { k: [{ s: 0, t: 0, b: 0, u: 180, f: 0, ay: 150 }, { s: 20, t: -45, b: 25, u: 185, f: 0, ay: 150 }, { s: 0, t: 0, b: 0, u: 20, f: 0, ay: 116 }] }
+  };
+  var FLOOR = 150;
+  function dir(a) { var r = a * Math.PI / 180; return [Math.sin(r), -Math.cos(r)]; }
+  function mv(p, a, len) { var d = dir(a); return [p[0] + d[0] * len, p[1] + d[1] * len]; }
+  function lerpPose(a, b, x) { var o = {}; for (var k in a) o[k] = a[k] + ((b[k] === undefined ? a[k] : b[k]) - a[k]) * x; return o; }
+  function figure(spec, p) {
+    var an = [spec.ax || 100, p.ay === undefined ? FLOOR : p.ay];
+    var kn = mv(an, p.s, 34), hp = mv(kn, p.t, 36), sh = mv(hp, p.b, 46), hd = mv(sh, p.b, 15);
+    var el = mv(sh, p.b + p.u, 26), wr = mv(el, p.b + p.u + p.f, 24);
+    var toe = spec.toeFix ? [an[0] + 13, FLOOR] : [an[0] + 11, an[1]];
+    var L = function (a, b, extra) { return '<line x1="' + a[0].toFixed(1) + '" y1="' + a[1].toFixed(1) + '" x2="' + b[0].toFixed(1) + '" y2="' + b[1].toFixed(1) + '"' + (extra || '') + '/>'; };
+    var g = '<line x1="4" y1="' + (FLOOR + 3) + '" x2="196" y2="' + (FLOOR + 3) + '" stroke="var(--line)" stroke-width="2"/>';
+    if (spec.bench) g += '<rect x="18" y="124" width="40" height="27" rx="3" fill="var(--muted)" fill-opacity=".35"/>';
+    g += '<g stroke="var(--ink)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" fill="none">';
+    if (spec.leg2) { var k2 = mv(hp, p.t2, 36), a2 = mv(k2, p.s2, 34); g += '<g stroke-opacity=".45">' + L(hp, k2) + L(k2, a2) + '</g>'; }
+    g += L(an, kn) + L(kn, hp) + L(an, toe) + L(hp, sh) + L(sh, el) + L(el, wr) + '</g>';
+    g += '<circle cx="' + hd[0].toFixed(1) + '" cy="' + hd[1].toFixed(1) + '" r="9" fill="var(--ink)"/>';
+    var bar = null;
+    if (spec.bar === 'hand') bar = wr;
+    else if (spec.bar === 'hip') bar = [hp[0], hp[1] - 11];
+    else if (spec.bar === 'back') { var d = dir(p.b); bar = [sh[0] - 6 * Math.cos(p.b * Math.PI / 180) + d[0], sh[1] - 6 * Math.sin(p.b * Math.PI / 180) + d[1]]; }
+    if (bar) g += '<circle cx="' + bar[0].toFixed(1) + '" cy="' + bar[1].toFixed(1) + '" r="12" fill="var(--cone)"/><circle cx="' + bar[0].toFixed(1) + '" cy="' + bar[1].toFixed(1) + '" r="3" fill="var(--surface)"/>';
+    return g;
+  }
+  var MOVE = 1100, HOLD = 450;
+  function poseAt(spec, ms) {
+    var n = spec.k.length, seg = MOVE + HOLD, i = Math.floor(ms / seg) % n, x = (ms % seg) / MOVE;
+    if (x >= 1) return spec.k[(i + 1) % n];
+    var e = x < .5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2;
+    return lerpPose(spec.k[i], spec.k[(i + 1) % n], e);
+  }
+  var REDUCED = false; try { REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) {}
+  function animHtml(id) {
+    var spec = ANIM[id]; if (!spec) return '';
+    return '<svg class="anim" data-anim="' + id + '" viewBox="0 -45 200 203" role="img" aria-label="Figura animada del movimiento">' + figure(spec, spec.k[REDUCED ? spec.k.length - 1 : 0]) + '</svg>' +
+      (REDUCED ? '<button type="button" class="btn ghost sm" data-step="' + id + '">Cambiar posición</button>' : '');
+  }
+  var t0 = null;
+  function tick(ts) {
+    if (t0 === null) t0 = ts;
+    document.querySelectorAll('.how[open] svg.anim').forEach(function (s) { s.innerHTML = figure(ANIM[s.dataset.anim], poseAt(ANIM[s.dataset.anim], ts - t0)); });
+    requestAnimationFrame(tick);
+  }
+  if (!REDUCED) requestAnimationFrame(tick);
+  var stepIdx = {};
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-step]'); if (!b) return;
+    var id = b.dataset.step, spec = ANIM[id]; stepIdx[id] = ((stepIdx[id] || 0) + 1) % spec.k.length;
+    var s = b.previousElementSibling; if (s) s.innerHTML = figure(spec, spec.k[stepIdx[id]]);
+  });
+
+  var SKIP_HOW =/^(l-c1|l-c3|l-bici|l-est|m-c1|m-c3|m-s3|m-b2|m-e|j-c1|j-r1|j-b1|j-e|v-c1|v-h2|s-|d-|p-|a-4|a-5)/;
   function howHtml(i) {
     if (SKIP_HOW.test(i.id) && !HOW[i.id]) return '';
     var q = Q[i.id] || (i.t + ' técnica');
     var tips = HOW[i.id] ? '<ol>' + HOW[i.id].map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('') + '</ol>' : '';
-    return '<details class="how"><summary>Cómo se hace</summary><div class="body">' + tips +
+    return '<details class="how"><summary>Cómo se hace</summary><div class="body">' + animHtml(i.id) + tips +
       '<a href="https://www.youtube.com/results?search_query=' + encodeURIComponent(q) + '" target="_blank" rel="noopener">' + YT + 'Ver videos en YouTube</a></div></details>';
   }
 
