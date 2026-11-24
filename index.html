@@ -157,6 +157,22 @@ nav.tabs button[aria-current="page"] { color: var(--cone); }
 .how summary::before { content: "▸"; transition: transform .15s; }
 .how[open] summary::before { transform: rotate(90deg); }
 .how .body { margin-top: 6px; padding: 10px 12px; background: var(--surface-2); border-radius: 8px; display: grid; gap: 8px; }
+.photo { position: relative; width: 100%; max-width: 420px; aspect-ratio: 850 / 567; border-radius: 8px; overflow: hidden; background: var(--surface); justify-self: center; }
+.photo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.photo img.b { animation: swap 3.2s infinite; }
+.photo .lbl { position: absolute; left: 8px; bottom: 8px; background: rgba(0,0,0,.6); color: #fff; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px; }
+.photo .lbl.b { animation: swap 3.2s infinite; }
+.photo .lbl.a { animation: swap 3.2s infinite reverse; }
+@keyframes swap { 0%, 42% { opacity: 0; } 50%, 92% { opacity: 1; } 100% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .photo { aspect-ratio: auto; display: grid; grid-template-columns: 1fr 1fr; gap: 4px; background: none; }
+  .photo img { position: static; height: auto; aspect-ratio: 850 / 567; border-radius: 6px; }
+  .photo img.b, .photo .lbl { animation: none; }
+  .photo .lbl { display: none; }
+}
+.credit { font-size: 11px; color: var(--muted); }
+[hidden] { display: none !important; }
+.how .body > .btn { justify-self: center; }
 .how .anim { width: 100%; max-width: 260px; height: auto; display: block; justify-self: center; background: var(--surface); border-radius: 8px; }
 .how ol { margin: 0; padding-left: 18px; display: grid; gap: 3px; }
 .how a { color: var(--ink); font-weight: 600; display: inline-flex; align-items: center; gap: 6px; text-decoration: none; border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 4px 12px; justify-self: start; }
@@ -526,10 +542,27 @@ nav.tabs button[aria-current="page"] { color: var(--cone); }
     return lerpPose(spec.k[i], spec.k[(i + 1) % n], e);
   }
   var REDUCED = false; try { REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) {}
+  // Fotos reales: Free Exercise DB (dominio público), posición inicial (0) y final (1)
+  var PHOTOS = { sentadilla: 1, rumano: 1, remo: 1, militar: 1, zancada: 1, pesomuerto: 1, hipthrust: 1, 'x-k3': 1, pantorrilla: 1, pressuelo: 1, 'v-salto': 1, 'x-k1': 1, 'l-plancha': 1 };
+  function photoHtml(i) {
+    if (!PHOTOS[i.id]) return '';
+    var src = function (k) { return 'img/ejercicios/' + i.id + '-' + k + '.jpg'; };
+    return '<div class="photo"><img src="' + src(0) + '" alt="' + esc(i.t) + ', posición inicial" loading="lazy">' +
+      '<img class="b" src="' + src(1) + '" alt="' + esc(i.t) + ', posición final" loading="lazy">' +
+      '<span class="lbl a">Inicio</span><span class="lbl b">Final</span></div>' +
+      (ANIM[i.id] ? '<button type="button" class="btn ghost sm" data-fig="' + i.id + '">Ver figura animada</button>' : '');
+  }
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-fig]'); if (!b) return;
+    var body = b.closest('.body'), svg = body.querySelector('svg.anim'), step = body.querySelector('[data-step]');
+    var show = svg.hasAttribute('hidden'); svg.toggleAttribute('hidden', !show); if (step) step.hidden = !show;
+    b.textContent = show ? 'Ocultar figura' : 'Ver figura animada';
+  });
   function animHtml(id) {
     var spec = ANIM[id]; if (!spec) return '';
-    return '<svg class="anim" data-anim="' + id + '" viewBox="0 -45 200 203" role="img" aria-label="Figura animada del movimiento">' + figure(spec, spec.k[REDUCED ? spec.k.length - 1 : 0]) + '</svg>' +
-      (REDUCED ? '<button type="button" class="btn ghost sm" data-step="' + id + '">Cambiar posición</button>' : '');
+    var hid = PHOTOS[id] ? ' hidden' : '';
+    return '<svg class="anim"' + hid + ' data-anim="' + id + '" viewBox="0 -45 200 203" role="img" aria-label="Figura animada del movimiento">' + figure(spec, spec.k[REDUCED ? spec.k.length - 1 : 0]) + '</svg>' +
+      (REDUCED ? '<button type="button" class="btn ghost sm"' + hid + ' data-step="' + id + '">Cambiar posición</button>' : '');
   }
   var t0 = null;
   function tick(ts) {
@@ -550,7 +583,8 @@ nav.tabs button[aria-current="page"] { color: var(--cone); }
     if (SKIP_HOW.test(i.id) && !HOW[i.id]) return '';
     var q = Q[i.id] || (i.t + ' técnica');
     var tips = HOW[i.id] ? '<ol>' + HOW[i.id].map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('') + '</ol>' : '';
-    return '<details class="how"><summary>Cómo se hace</summary><div class="body">' + animHtml(i.id) + tips +
+    return '<details class="how"><summary>Cómo se hace</summary><div class="body">' + photoHtml(i) + animHtml(i.id) + tips +
+      (PHOTOS[i.id] ? '<span class="credit">Fotos: Free Exercise DB, dominio público.</span>' : '') +
       '<a href="https://www.youtube.com/results?search_query=' + encodeURIComponent(q) + '" target="_blank" rel="noopener">' + YT + 'Ver videos en YouTube</a></div></details>';
   }
 
