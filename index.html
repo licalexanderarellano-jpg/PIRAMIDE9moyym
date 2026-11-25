@@ -171,6 +171,9 @@ nav.tabs button[aria-current="page"] { color: var(--cone); }
   .photo .lbl { display: none; }
 }
 .credit { font-size: 11px; color: var(--muted); }
+.sync { display: flex; align-items: center; gap: 8px; font-weight: 600; }
+.sync .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--muted); flex: none; }
+.sync .dot.ok { background: var(--good); } .sync .dot.saving { background: var(--warn); } .sync .dot.error { background: var(--bad); }
 [hidden] { display: none !important; }
 .how .body > .btn { justify-self: center; }
 .goal { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: start; padding: 10px 0; border-bottom: 1px solid var(--line); }
@@ -368,8 +371,21 @@ nav.tabs button[aria-current="page"] { color: var(--cone); }
       <div class="note" id="calcNote"></div>
     </div>
     <div class="card">
-      <h3>Respaldo</h3>
-      <p class="small muted">Tus registros se guardan en este navegador. Copia el respaldo de vez en cuando y guárdalo en tus notas; si cambias de teléfono, pégalo abajo para recuperarlo todo.</p>
+      <h3>Dónde se guardan tus datos</h3>
+      <div class="sync" id="syncBox"><span class="dot" id="syncDot"></span><span id="syncTxt">Conectando con tu cuenta…</span></div>
+      <p class="small muted">Cuando dice “Guardado en tu cuenta”, tus entrenos, comidas, InBody y pruebas quedan en tu cuenta de Claude, privados para ti. Los ves igual en el iPhone y en la computadora, aunque borres el navegador.</p>
+      <div class="note"><b>Para tenerla como app en tu iPhone:</b>
+        <ol class="list" style="margin-top:6px">
+          <li>Abre el enlace de la app en <b>Safari</b> e inicia sesión en Claude.</li>
+          <li>Toca el botón <b>Compartir</b> (el cuadro con la flecha hacia arriba).</li>
+          <li>Baja y elige <b>Agregar a pantalla de inicio</b>, ponle de nombre “Cancha y Casa” y toca <b>Agregar</b>.</li>
+          <li>Ábrela desde el ícono. La primera vez quizá te pida iniciar sesión de nuevo; después ya se queda.</li>
+        </ol>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Respaldo extra</h3>
+      <p class="small muted">Opcional. Copia el respaldo de vez en cuando y guárdalo en tus notas; si algo falla, pégalo abajo para recuperarlo todo.</p>
       <div class="row"><button class="btn ghost sm" id="expBtn" type="button">Mostrar respaldo</button><button class="btn ghost sm" id="copyBtn" type="button" hidden>Copiar</button></div>
       <textarea id="expTxt" readonly hidden aria-label="Respaldo"></textarea>
       <label for="impTxt" class="small muted">Pegar respaldo para restaurar</label>
@@ -689,7 +705,105 @@ nav.tabs button[aria-current="page"] { color: var(--cone); }
   try { var raw = localStorage.getItem(KEY); if (raw) { var s = JSON.parse(raw); if (s && s.profile) state = Object.assign(state, s); } } catch (e) {}
   state.partidos = state.partidos || {}; state.tests = state.tests || [];
   if (state.profile.metaGrasa === undefined) state.profile.metaGrasa = 13;
-  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+  // ---------- Guardado: copia en el teléfono + cuenta de Claude ----------
+  // Documentos en la cuenta: "core" (perfil, kilos, partidos, InBody, pruebas) y "log-AAAA-MM" (un documento por mes).
+  var PKEY = KEY + '-pendientes';
+  var pending = {};
+  try { pending = JSON.parse(localStorage.getItem(PKEY) || '{}') || {}; } catch (e) { pending = {}; }
+  function buildDocs() {
+    var docs = { core: { profile: state.profile, kg: state.kg, partidos: state.partidos, inbody: state.inbody, tests: state.tests } };
+    Object.keys(state.log).forEach(function (d) {
+      var name = 'log-' + d.slice(0, 7);
+      (docs[name] = docs[name] || { days: {} }).days[d] = state.log[d];
+    });
+    return docs;
+  }
+  function jsonDocs() { var d = buildDocs(), o = {}; Object.keys(d).forEach(function (k) { o[k] = JSON.stringify(d[k]); }); return o; }
+  var baseline = jsonDocs();
+  var cloud = { db: null, uid: null, ready: false, busy: false, timer: null };
+  function markPending() {
+    var now = jsonDocs(), changed = false;
+    Object.keys(now).forEach(function (k) { if (now[k] !== baseline[k] && !pending[k]) { pending[k] = Date.now(); changed = true; } });
+    if (changed) { try { localStorage.setItem(PKEY, JSON.stringify(pending)); } catch (e) {} }
+  }
+  function save() {
+    try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {}
+    markPending();
+    if (cloud.ready) { clearTimeout(cloud.timer); cloud.timer = setTimeout(flush, 1200); setSync('saving'); }
+  }
+  async function flush() {
+    if (!cloud.ready || cloud.busy) return;
+    cloud.busy = true;
+    var docs = buildDocs(), names = Object.keys(pending), failed = false;
+    for (var i = 0; i < names.length; i++) {
+      var n = names[i], body = docs[n] || (n.indexOf('log-') === 0 ? { days: {} } : null);
+      if (!body) { delete pending[n]; continue; }
+      var json = JSON.stringify(body);
+      try {
+        await cloud.db.doc('data/users/' + cloud.uid + '/' + n).set(Object.assign({ updatedAt: Date.now() }, JSON.parse(json)));
+        baseline[n] = json;
+        if (JSON.stringify(buildDocs()[n] || { days: {} }) === json) delete pending[n];
+      } catch (e) {
+        failed = true;
+        if (e && e.code === 'quota_exceeded') { setSync('error', 'Tu espacio en la cuenta está lleno. Tus datos siguen en este teléfono.'); }
+        break;
+      }
+    }
+    try { localStorage.setItem(PKEY, JSON.stringify(pending)); } catch (e) {}
+    cloud.busy = false;
+    if (failed) { if (!/lleno/.test($('syncTxt').textContent)) setSync('error', 'No se pudo guardar en tu cuenta ahora. Queda en este teléfono y se reintenta en tu siguiente cambio.'); }
+    else if (Object.keys(pending).length) { flush(); }
+    else setSync('ok');
+  }
+  function setSync(kind, msg) {
+    var dot = $('syncDot'), txt = $('syncTxt'); if (!dot) return;
+    dot.className = 'dot ' + kind;
+    txt.textContent = msg || (kind === 'ok' ? 'Guardado en tu cuenta' : kind === 'saving' ? 'Guardando en tu cuenta…' : kind === 'local' ? 'Solo en este teléfono' : 'Conectando con tu cuenta…');
+  }
+  function applyRemote(snap) {
+    var remote = {};
+    snap.docs.forEach(function (d) { if (d.exists) remote[d.id] = d.data(); });
+    var applied = false;
+    Object.keys(remote).forEach(function (n) {
+      if (pending[n]) return; // cambio local sin subir: gana el teléfono
+      var r = remote[n];
+      if (n === 'core') {
+        ['profile', 'kg', 'partidos', 'inbody', 'tests'].forEach(function (k) { if (r[k] !== undefined) state[k] = JSON.parse(JSON.stringify(r[k])); });
+        if (!state.profile.metaGrasa) state.profile.metaGrasa = 13;
+      } else if (n.indexOf('log-') === 0) {
+        var ym = n.slice(4);
+        Object.keys(state.log).forEach(function (d) { if (d.slice(0, 7) === ym) delete state.log[d]; });
+        var days = r.days || {};
+        Object.keys(days).forEach(function (d) { state.log[d] = JSON.parse(JSON.stringify(days[d])); });
+      } else return;
+      var body = JSON.parse(JSON.stringify(r)); delete body.updatedAt;
+      baseline[n] = JSON.stringify(n === 'core' ? buildDocs().core : buildDocs()[n] || { days: {} });
+      applied = true;
+    });
+    // Lo que existe aquí pero no en la cuenta se sube
+    var local = jsonDocs();
+    Object.keys(local).forEach(function (n) { if (!remote[n] && !pending[n]) pending[n] = Date.now(); });
+    try { localStorage.setItem(KEY, JSON.stringify(state)); localStorage.setItem(PKEY, JSON.stringify(pending)); } catch (e) {}
+    return applied;
+  }
+  async function connectCloud() {
+    var db = null, user = null;
+    try { db = await claude.use('db'); user = await claude.use('user'); } catch (e) {}
+    var uid = null;
+    try { uid = user ? await user.id() : null; } catch (e) {}
+    if (!db || !uid) { setSync('local', 'Solo en este teléfono. Abre la app con tu sesión de Claude iniciada para guardar en tu cuenta.'); return; }
+    cloud.db = db; cloud.uid = uid;
+    var snap = null;
+    try {
+      snap = await Promise.race([db.collection('data/users/' + uid).get(), new Promise(function (_, rej) { setTimeout(function () { rej({ code: 'timeout' }); }, 10000); })]);
+    } catch (e) {
+      setSync('error', 'No se pudo conectar con tu cuenta. Tus datos siguen en este teléfono; vuelve a abrir la app con señal.');
+      return;
+    }
+    if (applyRemote(snap)) { renderAll(); }
+    cloud.ready = true;
+    if (Object.keys(pending).length) { setSync('saving'); flush(); } else setSync('ok');
+  }
   function dayLog(date) { if (!state.log[date]) state.log[date] = { done: {}, water: 0 }; var l = state.log[date]; l.done = l.done || {}; l.comidas = l.comidas || []; l.water = l.water || 0; return l; }
 
   var sel = TODAY_ISO;
@@ -1129,5 +1243,7 @@ nav.tabs button[aria-current="page"] { color: var(--cone); }
   renderChips();
   renderAll();
   show(location.hash.slice(1));
+  if (window.claude && typeof window.claude.use === 'function') connectCloud();
+  else setSync('local', 'Solo en este teléfono. Abre la app desde su enlace de Claude para guardar en tu cuenta.');
 })();
 </script>
