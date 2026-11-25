@@ -645,6 +645,22 @@ nav.tabs button[aria-current="page"] { color: var(--cone); }
     var s = b.previousElementSibling; if (s) s.innerHTML = figure(spec, spec.k[stepIdx[id]]);
   });
 
+  // PRUEBA: enlace a la animación ("monito") en el repositorio hasaneyldrm/exercises-dataset.
+  // Las animaciones son © Gym visual; la app no las copia, solo abre el enlace. Para quitar la prueba, borra MONITO y monitoHtml.
+  var MONITO_BASE = 'https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/';
+  var MONITO = {
+    sentadilla: 'videos/0043-qXTaZnJ.gif', rumano: 'videos/0085-wQ2c4XD.gif', remo: 'videos/0027-eZyBC3j.gif',
+    militar: 'videos/1456-wdRZISl.gif', zancada: 'videos/0078-VaP75jl.gif', pesomuerto: 'videos/0032-ila4NZS.gif',
+    'x-k3': 'videos/1409-qKBpF7I.gif', pantorrilla: 'videos/1372-8ozhUIZ.gif', 'v-salto': 'videos/0514-LIlE5Tn.gif',
+    'x-k1': 'videos/0276-iny3m5y.gif', 'x-k5': 'videos/0872-nCU1Ekp.gif', 'x-k2': 'videos/0705-RKjH6Lt.gif',
+    'l-plancha': 'videos/2135-VBAWRPG.gif', lagartijas: 'videos/0662-I4hDWkc.gif'
+  };
+  function monitoHtml(id) {
+    if (!MONITO[id]) return '';
+    return '<a href="' + MONITO_BASE + MONITO[id] + '" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true" style="fill:var(--cone)"><circle cx="12" cy="5" r="3"/><path d="M10 9h4l1 6-2 1v6h-2v-6l-2-1z"/></svg>Ver monito (prueba)</a>' +
+      '<span class="credit">Animación © Gym visual, se abre en GitHub.</span>';
+  }
+
   var SKIP_HOW =/^(l-c1|l-c3|l-bici|l-est|m-c1|m-c3|m-s3|m-b2|m-e|j-c1|j-r1|j-b1|j-e|v-c1|v-h2|s-|d-|p-|a-4|a-5)/;
   function howHtml(i) {
     if (SKIP_HOW.test(i.id) && !HOW[i.id]) return '';
@@ -652,7 +668,8 @@ nav.tabs button[aria-current="page"] { color: var(--cone); }
     var tips = HOW[i.id] ? '<ol>' + HOW[i.id].map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('') + '</ol>' : '';
     return '<details class="how"><summary>Cómo se hace</summary><div class="body">' + photoHtml(i) + animHtml(i.id) + tips +
       (PHOTOS[i.id] ? '<span class="credit">Fotos: Free Exercise DB, dominio público.</span>' : '') +
-      '<a href="https://www.youtube.com/results?search_query=' + encodeURIComponent(q) + '" target="_blank" rel="noopener">' + YT + 'Ver videos en YouTube</a></div></details>';
+      '<a href="https://www.youtube.com/results?search_query=' + encodeURIComponent(q) + '" target="_blank" rel="noopener">' + YT + 'Ver videos en YouTube</a>' +
+      monitoHtml(i.id) + '</div></details>';
   }
 
   var FATIGA = ['', 'Fresco', 'Bien', 'Normal', 'Cansado', 'Agotado'];
